@@ -1,3 +1,28 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+    encoding:
+      charset: utf-8
+      enabled: true
+
 spring:
   application:
     name: oneBox
+  datasource:
+    url: jdbc:postgresql://localhost:5432/oneBox
+    driver-class-name: org.postgresql.Driver
+    username: one_box
+    password: one_box_123
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+  output:
+    ansi:
+      enabled: ALWAYS
+
+logging:
+  level:
+    org.springframework: INFO
+    org.hibernate: WARN
