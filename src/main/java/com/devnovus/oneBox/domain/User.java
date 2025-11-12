@@ -16,10 +16,6 @@ public class User extends BaseEntity {
     @Column(name = "used_quota", updatable = false)
     private Long usedQuota = 0L;
 
-    // 총 사용량 (단위: Byte, 기본값: 5GB)
-    @Column(name = "total_quota", updatable = false)
-    private Long totalQuota = 5368709120L;
-
     // 현재 사용량 수정
     public void setUsedQuota(Long usedQuota) {
         this.usedQuota = usedQuota;

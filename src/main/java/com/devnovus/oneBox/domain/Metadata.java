@@ -11,12 +11,12 @@ import lombok.Getter;
 @Table(name = "metadata")
 public class Metadata extends BaseEntity {
     // 소유자
-    @JoinColumn(name = "owner_id", nullable = false)
+    @JoinColumn(name = "owner_id")
     @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private User ownerId;
 
     // 상위폴더
-    @JoinColumn(name = "parent_folder_id", nullable = false)
+    @JoinColumn(name = "parent_folder_id")
     @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Metadata parentFolderId;
 
@@ -30,6 +30,7 @@ public class Metadata extends BaseEntity {
 
     // 타입 (파일, 폴더)
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private MetadataType type;
 
     // 크기

@@ -10,7 +10,7 @@ spring:
   application:
     name: oneBox
   datasource:
-    url: jdbc:postgresql://localhost:5432/oneBox
+    url: jdbc:postgresql://localhost:5432/one_box
     driver-class-name: org.postgresql.Driver
     username: one_box
     password: one_box_123
@@ -21,6 +21,9 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+
+app:
+  max-quota: 5GB
 
 logging:
   level:
