@@ -15,6 +15,11 @@ public class Metadata extends BaseEntity {
     @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private User ownerId;
 
+    // 상위폴더
+    @JoinColumn(name = "parent_folder_id", nullable = false)
+    @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    private Metadata parentFolderId;
+
     // 이름
     @Column(nullable = false)
     private String name;
