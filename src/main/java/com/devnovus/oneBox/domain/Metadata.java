@@ -4,21 +4,21 @@ import com.devnovus.oneBox.aop.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@AllArgsConstructor
 @Table(name = "metadata")
 public class Metadata extends BaseEntity {
     // 소유자
     @JoinColumn(name = "owner_id")
     @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-    private User ownerId;
+    private User owner;
 
     // 상위폴더
     @JoinColumn(name = "parent_folder_id")
     @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-    private Metadata parentFolderId;
+    private Metadata parentFolder;
 
     // 이름
     @Column(nullable = false)
@@ -40,4 +40,15 @@ public class Metadata extends BaseEntity {
     // 타입이 파일인 경우
     @Embedded
     private FileMetadata fileMetadata;
+
+    public Metadata() {}
+
+    // 폴더 생성 시
+    public Metadata(User owner, Metadata parentFolder, String name, String path) {
+        this.owner = owner;
+        this.parentFolder = parentFolder;
+        this.name = name;
+        this.path = path;
+        this.type = MetadataType.FOLDER;
+    }
 }
