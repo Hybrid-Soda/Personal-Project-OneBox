@@ -64,11 +64,11 @@ public class FolderService {
             throw new ApplicationException(ApplicationError.DUPLICATE_FOLDER_NAME);
         }
         // parentFolderId 폴더가 맞는지 확인
-        if (parentFolder.getType() == MetadataType.FOLDER) {
+        if (parentFolder.getType() != MetadataType.FOLDER) {
             throw new ApplicationException(ApplicationError.IS_NOT_FOLDER);
         }
         // 같은 폴더 내에 100개 이상의 폴더가 있는지 확인
-        if (metadataRepository.countByParentFolderId(parentFolder.getId()) < 100L) {
+        if (metadataRepository.countByParentFolderId(parentFolder.getId()) >= 100L) {
             throw new ApplicationException(ApplicationError.TOO_MANY_CHILD_FOLDERS);
         }
     }
