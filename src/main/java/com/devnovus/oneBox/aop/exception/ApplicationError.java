@@ -17,7 +17,7 @@ public enum ApplicationError implements ErrorCode {
     IS_NOT_FOLDER(HttpStatus.BAD_REQUEST,"폴더가 아닙니다.", HttpStatus.BAD_REQUEST.value()),
     INVALID_FOLDER_NAME(HttpStatus.BAD_REQUEST,"폴더명에 허용되지 않는 특수 문자가 포함되어 있습니다.", HttpStatus.BAD_REQUEST.value()),
     TOO_MANY_CHILD_FOLDERS(HttpStatus.BAD_REQUEST,"같은 폴더에 생성 가능한 폴더 수를 초과했습니다.", HttpStatus.BAD_REQUEST.value()),
-    FOLDER_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST,"폴더 깊이 제한을 초과했습니다.", HttpStatus.BAD_REQUEST.value()),
+    PATH_LENGTH_EXCEEDED(HttpStatus.BAD_REQUEST,"경로 문자 길이 제한을 초과했습니다.", HttpStatus.BAD_REQUEST.value()),
     ;
 
 

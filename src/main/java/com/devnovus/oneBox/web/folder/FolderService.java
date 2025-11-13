@@ -71,5 +71,9 @@ public class FolderService {
         if (metadataRepository.countByParentFolderId(parentFolder.getId()) >= 100L) {
             throw new ApplicationException(ApplicationError.TOO_MANY_CHILD_FOLDERS);
         }
+        // 경로 문자열 길이가 255를 초과하는지 확인
+        if (parentFolder.getPath().length() + request.getFolderName().length() > 254) {
+            throw new ApplicationException(ApplicationError.PATH_LENGTH_EXCEEDED);
+        }
     }
 }

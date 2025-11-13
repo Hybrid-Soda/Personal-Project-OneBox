@@ -3,6 +3,7 @@ package com.devnovus.oneBox.web.folder;
 import com.devnovus.oneBox.aop.dto.BaseResponse;
 import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
 import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ public class FolderController {
     /** 폴더생성 */
     @PostMapping
     public ResponseEntity<BaseResponse<String>> createFolder(
-            @RequestBody CreateFolderRequest request
+            @Valid @RequestBody CreateFolderRequest request
     ) {
         folderService.createFolder(request);
         return ResponseEntity.status(201).body(BaseResponse.of("폴더생성완료"));

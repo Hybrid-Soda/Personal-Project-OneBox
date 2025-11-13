@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@AllArgsConstructor
 @Table(name = "metadata")
 public class Metadata extends BaseEntity {
     // 소유자
@@ -50,5 +51,15 @@ public class Metadata extends BaseEntity {
         this.name = name;
         this.path = path;
         this.type = MetadataType.FOLDER;
+    }
+
+    // 파일 생성 시
+    public Metadata(User owner, Metadata parentFolder, String name, String path, Long size) {
+        this.owner = owner;
+        this.parentFolder = parentFolder;
+        this.name = name;
+        this.path = path;
+        this.type = MetadataType.FILE;
+        this.size = size;
     }
 }
