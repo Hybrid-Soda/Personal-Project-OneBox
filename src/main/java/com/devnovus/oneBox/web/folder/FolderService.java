@@ -4,10 +4,13 @@ import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
 import com.devnovus.oneBox.domain.*;
 import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
+import com.devnovus.oneBox.web.folder.dto.MetadataResponse;
 import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +33,15 @@ public class FolderService {
 
     /** 폴더조회 */
     @Transactional(readOnly = true)
-    public void getFolder(Long folderId) {
-        // pass
+    public List<MetadataResponse> getListInFolder(Long folderId) {
+        if (findFolder(folderId).getType() != MetadataType.FOLDER) {
+            throw new ApplicationException(ApplicationError.IS_NOT_FOLDER);
+        }
+
+        return metadataRepository.findByParentFolderId(folderId)
+                .stream()
+                .map(folderMapper::createMetadataResponse)
+                .toList();
     }
 
     /** 폴더수정 */
@@ -68,7 +78,7 @@ public class FolderService {
             throw new ApplicationException(ApplicationError.IS_NOT_FOLDER);
         }
         // 같은 폴더 내에 100개 이상의 폴더가 있는지 확인
-        if (metadataRepository.countByParentFolderId(parentFolder.getId()) >= 100L) {
+        if (metadataRepository.countByParentFolderIdAndType(parentFolder.getId(), MetadataType.FOLDER) >= 100L) {
             throw new ApplicationException(ApplicationError.TOO_MANY_CHILD_FOLDERS);
         }
         // 경로 문자열 길이가 255를 초과하는지 확인

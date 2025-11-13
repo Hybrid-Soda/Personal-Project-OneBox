@@ -93,7 +93,7 @@ public class CreateFolderTest {
 
         given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
         given(metadataRepository.findById(request.getParentFolderId())).willReturn(Optional.of(rootFolder));
-        given(metadataRepository.countByParentFolderId(rootFolder.getId())).willReturn(100L);
+        given(metadataRepository.countByParentFolderIdAndType(rootFolder.getId(), MetadataType.FOLDER)).willReturn(100L);
 
         // when & then
         assertThatThrownBy(() -> folderService.createFolder(request))
@@ -111,7 +111,7 @@ public class CreateFolderTest {
 
         given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
         given(metadataRepository.findById(request.getParentFolderId())).willReturn(Optional.of(longParentFolder));
-        given(metadataRepository.countByParentFolderId(longParentFolder.getId())).willReturn(0L);
+        given(metadataRepository.countByParentFolderIdAndType(longParentFolder.getId(), MetadataType.FOLDER)).willReturn(0L);
 
         // when & then
         assertThatThrownBy(() -> folderService.createFolder(request))

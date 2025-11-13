@@ -12,11 +12,11 @@ public class BaseResponse<T> {
     private String message = "";
     private T result;
 
-    public BaseResponse(T result) {
-        this.result = result;
-    }
-
     public static <T> BaseResponse<T> of(String message) {
         return new BaseResponse<>(ResponseCode.SUCCESS, message, null);
+    }
+
+    public static <T> BaseResponse<T> of(T result) {
+        return new BaseResponse<>(ResponseCode.SUCCESS, null, result);
     }
 }

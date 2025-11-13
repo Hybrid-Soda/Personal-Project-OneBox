@@ -2,11 +2,14 @@ package com.devnovus.oneBox.web.folder;
 
 import com.devnovus.oneBox.aop.dto.BaseResponse;
 import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
+import com.devnovus.oneBox.web.folder.dto.MetadataResponse;
 import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/folder")
@@ -23,13 +26,13 @@ public class FolderController {
         return ResponseEntity.status(201).body(BaseResponse.of("폴더생성완료"));
     }
 
-    /** 폴더조회 */
-    @GetMapping("/{folderId}")
-    public ResponseEntity<BaseResponse<String>> getFolder(
+    /** 폴더탐색 */
+    @GetMapping("/list/{folderId}")
+    public ResponseEntity<BaseResponse<List<MetadataResponse>>> getListInFolder(
             @PathVariable Long folderId
     ) {
-        folderService.getFolder(folderId);
-        return ResponseEntity.ok().body(BaseResponse.of("s"));
+        List<MetadataResponse> resources = folderService.getListInFolder(folderId);
+        return ResponseEntity.ok().body(BaseResponse.of(resources));
     }
 
     /** 폴더수정 */

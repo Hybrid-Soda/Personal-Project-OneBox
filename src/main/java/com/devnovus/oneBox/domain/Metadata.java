@@ -2,13 +2,10 @@ package com.devnovus.oneBox.domain;
 
 import com.devnovus.oneBox.aop.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@AllArgsConstructor
 @Table(name = "metadata")
 public class Metadata extends BaseEntity {
     // 소유자
