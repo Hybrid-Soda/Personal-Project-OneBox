@@ -6,6 +6,7 @@ import com.devnovus.oneBox.domain.Metadata;
 import com.devnovus.oneBox.domain.MetadataRepository;
 import com.devnovus.oneBox.domain.User;
 import com.devnovus.oneBox.domain.UserRepository;
+import com.devnovus.oneBox.web.file.dto.UploadFileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +22,9 @@ public class FileService {
     private final MetadataRepository metadataRepository;
 
     @Transactional
-    public void uploadFile(Long parentFolderId, List<MultipartFile> files) {
-        User user = userRepository.getReferenceById(1L);
-        Metadata parentFolder = findFolder(parentFolderId);
+    public void uploadFile(UploadFileRequest req, List<MultipartFile> files) {
+        User user = userRepository.getReferenceById(req.getUserId());
+        Metadata parentFolder = findFolder(req.getParentFolderId());
 
         files.forEach(file -> {
             String path = parentFolder.getPath() + file.getName();
