@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MetadataRepository extends JpaRepository<Metadata, Long> {
     // 같은 경로에 동일한 이름의 폴더 확인
@@ -36,9 +35,23 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
     );
 
     // 최대 path 길이를 가진 자식의 path 조회
-    @Query("SELECT path FROM Metadata " +
+    @Modifying
+    @Query(value =
+            "SELECT path FROM metadata " +
             "WHERE owner_id = :ownerId " +
             "AND path LIKE CONCAT(:oldPath, '%') " +
-            "ORDER BY LENGTH(path) DESC")
-    String findLongestChildPath(@Param("oldPath") String oldPath);
+            "ORDER BY LENGTH(path) DESC",
+            nativeQuery = true
+    )
+    String findLongestChildPath(@Param("ownerId") Long ownerId, @Param("oldPath") String oldPath);
+
+    // 폴더 하위 자원 삭제
+    @Modifying
+    @Query(value =
+            "DELETE FROM metadata " +
+            "WHERE owner_id = :ownerId " +
+            "AND path LIKE CONCAT(:path, '%')",
+            nativeQuery = true
+    )
+    void deleteAllChildren(@Param("ownerId") Long ownerId, @Param("path") String path);
 }

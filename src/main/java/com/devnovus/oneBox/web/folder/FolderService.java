@@ -4,6 +4,7 @@ import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
 import com.devnovus.oneBox.domain.*;
 import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
+import com.devnovus.oneBox.web.folder.dto.DeleteFolderRequest;
 import com.devnovus.oneBox.web.folder.dto.MetadataResponse;
 import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,7 @@ public class FolderService {
         validateRecursion(req.getParentFolderId(), folderId);
         validateFolderName(req.getFolderName(), req.getParentFolderId());
         validateChildFolderLimit(parentFolder.getId());
-        validatePathLengthForUpdate(parentFolder.getPath(), folder.getPath(), folder.getName());
+        validatePathLengthForUpdate(req.getUserId(), parentFolder.getPath(), folder.getPath(), folder.getName());
 
         // 이름과 상위 폴더 수정
         folder.setName(req.getFolderName());
@@ -70,8 +71,9 @@ public class FolderService {
 
     /** 폴더삭제 */
     @Transactional
-    public void deleteFolder(Long folderId) {
-        // pass
+    public void deleteFolder(Long folderId, DeleteFolderRequest req) {
+        Metadata folder = findFolder(folderId);
+        metadataRepository.deleteAllChildren(req.getUserId(), folder.getPath());
     }
 
     // 유저 조회
@@ -112,8 +114,9 @@ public class FolderService {
     }
 
     // 경로 길이 제한 검증 - 수정용
-    private void validatePathLengthForUpdate(String newParentFolderPath, String oldFolderPath, String folderName) {
-        String longestChildPath = metadataRepository.findLongestChildPath(oldFolderPath);
+    private void validatePathLengthForUpdate(
+            Long ownerId, String newParentFolderPath, String oldFolderPath, String folderName) {
+        String longestChildPath = metadataRepository.findLongestChildPath(ownerId, oldFolderPath);
         String relative = longestChildPath.substring(oldFolderPath.length());
         int newPathLength = newParentFolderPath.length() + folderName.length() + 1 + relative.length();
 

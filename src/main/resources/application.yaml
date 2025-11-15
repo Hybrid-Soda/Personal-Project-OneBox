@@ -18,6 +18,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
+    show-sql: true
   output:
     ansi:
       enabled: ALWAYS

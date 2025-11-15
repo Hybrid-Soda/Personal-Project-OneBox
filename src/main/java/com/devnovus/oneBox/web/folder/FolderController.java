@@ -2,6 +2,7 @@ package com.devnovus.oneBox.web.folder;
 
 import com.devnovus.oneBox.aop.dto.BaseResponse;
 import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
+import com.devnovus.oneBox.web.folder.dto.DeleteFolderRequest;
 import com.devnovus.oneBox.web.folder.dto.MetadataResponse;
 import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
 import jakarta.validation.Valid;
@@ -48,9 +49,10 @@ public class FolderController {
     /** 폴더삭제 */
     @DeleteMapping("/{folderId}")
     public ResponseEntity<Void> deleteFolder(
-            @PathVariable Long folderId
+            @PathVariable Long folderId,
+            @RequestBody DeleteFolderRequest request
     ) {
-        folderService.deleteFolder(folderId);
+        folderService.deleteFolder(folderId, request);
         return ResponseEntity.noContent().build();
     }
 }

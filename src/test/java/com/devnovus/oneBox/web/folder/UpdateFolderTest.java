@@ -71,11 +71,12 @@ public class UpdateFolderTest {
     @DisplayName("폴더 이동 시 하위 자원의 경로 길이가 255자를 초과하면 예외 발생")
     void moveFolderShouldFailWhenChildPathExceedsLimit() {
         // given
+        Long userId = 1L;
         Long folderAId = 1L;
         Long folderBId = 2L;
         String longFilePath = "/A/" + "childFile1".repeat(25) + "/"; // 총 길이 = 250
         Metadata childFile = new Metadata(user, folderA, "childFile", longFilePath);
-        UpdateFolderRequest req = new UpdateFolderRequest(user.getId(), folderBId, "A");
+        UpdateFolderRequest req = new UpdateFolderRequest(userId, folderBId, "A");
 
         given(metadataRepository.findById(folderAId)).willReturn(Optional.of(folderA));
         given(metadataRepository.findById(folderBId)).willReturn(Optional.of(folderB));
@@ -83,7 +84,7 @@ public class UpdateFolderTest {
                 folderA.getName(), folderBId, MetadataType.FOLDER
         )).willReturn(false);
         given(metadataRepository.countByParentFolderIdAndType(any(), any())).willReturn(0L);
-        given(metadataRepository.findLongestChildPath(folderA.getPath())).willReturn(childFile.getPath());
+        given(metadataRepository.findLongestChildPath(userId, folderA.getPath())).willReturn(childFile.getPath());
 
 
         // when & then
@@ -94,7 +95,7 @@ public class UpdateFolderTest {
         // verify repository 호출
         verify(metadataRepository).findById(folderAId);
         verify(metadataRepository).findById(folderBId);
-        verify(metadataRepository).findLongestChildPath(folderA.getPath());
+        verify(metadataRepository).findLongestChildPath(userId, folderA.getPath());
         verifyNoMoreInteractions(metadataRepository);
     }
 }
