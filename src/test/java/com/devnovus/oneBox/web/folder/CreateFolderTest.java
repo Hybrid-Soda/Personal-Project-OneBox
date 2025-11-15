@@ -3,6 +3,7 @@ package com.devnovus.oneBox.web.folder;
 import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
 import com.devnovus.oneBox.domain.*;
+import com.devnovus.oneBox.web.common.FolderValidator;
 import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,9 +21,11 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FolderService – 폴더 생성 테스트")
 public class CreateFolderTest {
-    @InjectMocks private FolderService folderService;
+    @Mock private FolderMapper folderMapper;
     @Mock private UserRepository userRepository;
+    @Mock private FolderValidator folderValidator;
     @Mock private MetadataRepository metadataRepository;
+    @InjectMocks private FolderService folderService;
 
     private User user;
     private Metadata rootFolder;
@@ -34,7 +37,7 @@ public class CreateFolderTest {
         user = new User();
         rootFolder = new Metadata(user, null, "root", "/");
         child1Folder = new Metadata(user, rootFolder, "child1", "/child1/");
-        fileInRootFolder = new Metadata(user, rootFolder, "test.txt", "/test.txt", 1024L);
+        fileInRootFolder = new Metadata(user, rootFolder, "test.txt", "/test.txt", 1024L, "text/plain");
     }
 
     @Test

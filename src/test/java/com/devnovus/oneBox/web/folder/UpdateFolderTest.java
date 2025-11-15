@@ -3,6 +3,7 @@ package com.devnovus.oneBox.web.folder;
 import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
 import com.devnovus.oneBox.domain.*;
+import com.devnovus.oneBox.web.common.FolderValidator;
 import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,8 +22,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FolderService – 폴더 수정 테스트")
 public class UpdateFolderTest {
-    @InjectMocks private FolderService folderService;
+    @Mock private FolderMapper folderMapper;
+    @Mock private UserRepository userRepository;
+    @Mock private FolderValidator folderValidator;
     @Mock private MetadataRepository metadataRepository;
+    @InjectMocks private FolderService folderService;
 
     private Metadata rootFolder;
     private Metadata folderA;

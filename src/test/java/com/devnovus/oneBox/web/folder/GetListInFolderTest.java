@@ -6,6 +6,7 @@ import com.devnovus.oneBox.domain.Metadata;
 import com.devnovus.oneBox.domain.MetadataRepository;
 import com.devnovus.oneBox.domain.User;
 import com.devnovus.oneBox.domain.UserRepository;
+import com.devnovus.oneBox.web.common.FolderValidator;
 import com.devnovus.oneBox.web.folder.dto.MetadataResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -25,9 +27,11 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FolderService – 폴더 조회 테스트")
 public class GetListInFolderTest {
-    @InjectMocks private FolderService folderService;
     @Mock private FolderMapper folderMapper;
+    @Mock private UserRepository userRepository;
+    @Mock private FolderValidator folderValidator;
     @Mock private MetadataRepository metadataRepository;
+    @InjectMocks private FolderService folderService;
 
     private User user;
     private Metadata rootFolder;
@@ -39,7 +43,7 @@ public class GetListInFolderTest {
         user = new User();
         rootFolder = new Metadata(user, null, "root", "/");
         child1Folder = new Metadata(user, rootFolder, "child1", "/child1/");
-        fileInRootFolder = new Metadata(user, rootFolder, "test.txt", "/test.txt", 1024L);
+        fileInRootFolder = new Metadata(user, rootFolder, "test.txt", "/test.txt", 1024L, "text/plain");
     }
 
     @Test
@@ -59,10 +63,11 @@ public class GetListInFolderTest {
     @DisplayName("folderId가 폴더의 식별자가 아닌 경우")
     void parentIsNotFolder() {
         // given
-        given(metadataRepository.findById(fileInRootFolder.getId())).willReturn(Optional.of(fileInRootFolder));
+        Long fileInRootFolderId = 2L;
+        given(metadataRepository.findById(fileInRootFolderId)).willReturn(Optional.of(fileInRootFolder));
 
         // when & then
-        assertThatThrownBy(() -> folderService.getListInFolder(fileInRootFolder.getId()))
+        assertThatThrownBy(() -> folderService.getListInFolder(fileInRootFolderId))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.IS_NOT_FOLDER.getMessage());
     }

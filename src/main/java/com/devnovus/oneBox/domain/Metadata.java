@@ -51,13 +51,14 @@ public class Metadata extends BaseEntity {
     }
 
     // 파일 생성 시
-    public Metadata(User owner, Metadata parentFolder, String name, String path, Long size) {
+    public Metadata(User owner, Metadata parentFolder, String name, String path, Long size, String mimeType) {
         this.owner = owner;
         this.parentFolder = parentFolder;
         this.name = name;
         this.path = path;
         this.type = MetadataType.FILE;
         this.size = size;
+        this.fileMetadata = new FileMetadata(mimeType, UploadStatus.UPLOADING);
     }
 
     public void setName(String name) {
