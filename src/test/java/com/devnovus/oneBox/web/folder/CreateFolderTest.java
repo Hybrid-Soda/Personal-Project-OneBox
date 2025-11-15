@@ -41,16 +41,16 @@ public class CreateFolderTest {
     @DisplayName("동일한 이름의 폴더가 같은 경로에 존재하는 경우")
     void duplicateFolderName() {
         // given
-        CreateFolderRequest request = new CreateFolderRequest(user.getId(), rootFolder.getId(), "child1");
+        CreateFolderRequest req = new CreateFolderRequest(user.getId(), rootFolder.getId(), "child1");
 
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
-        given(metadataRepository.findById(request.getParentFolderId())).willReturn(Optional.of(rootFolder));
+        given(userRepository.findById(req.getUserId())).willReturn(Optional.of(user));
+        given(metadataRepository.findById(req.getParentFolderId())).willReturn(Optional.of(rootFolder));
         given(metadataRepository.existsByNameAndParentFolderIdAndType(
                 child1Folder.getName(), rootFolder.getId(), MetadataType.FOLDER
         )).willReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> folderService.createFolder(request))
+        assertThatThrownBy(() -> folderService.createFolder(req))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.DUPLICATE_FOLDER_NAME.getMessage());
     }
@@ -59,13 +59,13 @@ public class CreateFolderTest {
     @DisplayName("상위 디렉토리가 존재하지 않는 경우")
     void parentNotFound() {
         // given
-        CreateFolderRequest request = new CreateFolderRequest(user.getId(), 999L, "child2");
+        CreateFolderRequest req = new CreateFolderRequest(user.getId(), 999L, "child2");
 
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
         given(metadataRepository.findById(999L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> folderService.createFolder(request))
+        assertThatThrownBy(() -> folderService.createFolder(req))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.FOLDER_NOT_FOUND.getMessage());
     }
@@ -74,13 +74,13 @@ public class CreateFolderTest {
     @DisplayName("입력한 parentFolderId가 폴더가 아닌 경우")
     void parentIsNotFolder() {
         // given
-        CreateFolderRequest request = new CreateFolderRequest(user.getId(), fileInRootFolder.getId(), "child2");
+        CreateFolderRequest req = new CreateFolderRequest(user.getId(), fileInRootFolder.getId(), "child2");
 
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
-        given(metadataRepository.findById(request.getParentFolderId())).willReturn(Optional.of(fileInRootFolder));
+        given(metadataRepository.findById(req.getParentFolderId())).willReturn(Optional.of(fileInRootFolder));
 
         // when & then
-        assertThatThrownBy(() -> folderService.createFolder(request))
+        assertThatThrownBy(() -> folderService.createFolder(req))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.IS_NOT_FOLDER.getMessage());
     }
@@ -89,14 +89,14 @@ public class CreateFolderTest {
     @DisplayName("같은 폴더 내에 100개 이상의 폴더가 있는 경우")
     void tooManyFolders() {
         // given
-        CreateFolderRequest request = new CreateFolderRequest(user.getId(), rootFolder.getId(), "child2");
+        CreateFolderRequest req = new CreateFolderRequest(user.getId(), rootFolder.getId(), "child2");
 
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
-        given(metadataRepository.findById(request.getParentFolderId())).willReturn(Optional.of(rootFolder));
+        given(userRepository.findById(req.getUserId())).willReturn(Optional.of(user));
+        given(metadataRepository.findById(req.getParentFolderId())).willReturn(Optional.of(rootFolder));
         given(metadataRepository.countByParentFolderIdAndType(rootFolder.getId(), MetadataType.FOLDER)).willReturn(100L);
 
         // when & then
-        assertThatThrownBy(() -> folderService.createFolder(request))
+        assertThatThrownBy(() -> folderService.createFolder(req))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.TOO_MANY_CHILD_FOLDERS.getMessage());
     }
@@ -107,14 +107,14 @@ public class CreateFolderTest {
         // given
         String longParentPath = "/" + "A".repeat(254);
         Metadata longParentFolder = new Metadata(user, rootFolder, "longParentFolder", longParentPath);
-        CreateFolderRequest request = new CreateFolderRequest(user.getId(), longParentFolder.getId(), "child2");
+        CreateFolderRequest req = new CreateFolderRequest(user.getId(), longParentFolder.getId(), "child2");
 
-        given(userRepository.findById(request.getUserId())).willReturn(Optional.of(user));
-        given(metadataRepository.findById(request.getParentFolderId())).willReturn(Optional.of(longParentFolder));
+        given(userRepository.findById(req.getUserId())).willReturn(Optional.of(user));
+        given(metadataRepository.findById(req.getParentFolderId())).willReturn(Optional.of(longParentFolder));
         given(metadataRepository.countByParentFolderIdAndType(longParentFolder.getId(), MetadataType.FOLDER)).willReturn(0L);
 
         // when & then
-        assertThatThrownBy(() -> folderService.createFolder(request))
+        assertThatThrownBy(() -> folderService.createFolder(req))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.PATH_LENGTH_EXCEEDED.getMessage());
     }

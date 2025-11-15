@@ -59,4 +59,12 @@ public class Metadata extends BaseEntity {
         this.type = MetadataType.FILE;
         this.size = size;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setParentFolder(Metadata parentFolder) {
+        this.parentFolder = parentFolder;
+    }
 }

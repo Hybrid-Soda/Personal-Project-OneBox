@@ -25,8 +25,7 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FolderService – 폴더 조회 테스트")
 public class GetListInFolderTest {
-    @InjectMocks
-    private FolderService folderService;
+    @InjectMocks private FolderService folderService;
     @Mock private FolderMapper folderMapper;
     @Mock private MetadataRepository metadataRepository;
 
