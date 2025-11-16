@@ -3,11 +3,7 @@ package com.devnovus.oneBox.web.folder;
 import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
 import com.devnovus.oneBox.domain.*;
-import com.devnovus.oneBox.web.common.FolderValidator;
-import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
-import com.devnovus.oneBox.web.folder.dto.DeleteFolderRequest;
-import com.devnovus.oneBox.web.folder.dto.MetadataResponse;
-import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
+import com.devnovus.oneBox.web.folder.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,8 +25,8 @@ public class FolderService {
         Metadata parentFolder = findFolder(req.getParentFolderId());
 
         // 검증
-        folderValidator.validateTypeFolder(parentFolder.getType());
-        folderValidator.validateFolderName(req.getFolderName(), req.getParentFolderId());
+        folderValidator.validateFolderType(parentFolder.getType());
+        folderValidator.validateDuplicatedName(req.getFolderName(), req.getParentFolderId());
         folderValidator.validateChildFolderLimit(parentFolder.getId());
         folderValidator.validatePathLength(parentFolder.getPath(), req.getFolderName());
 
@@ -41,7 +37,7 @@ public class FolderService {
     @Transactional(readOnly = true)
     public List<MetadataResponse> getListInFolder(Long folderId) {
         Metadata folder = findFolder(folderId);
-        folderValidator.validateTypeFolder(folder.getType());
+        folderValidator.validateFolderType(folder.getType());
 
         return metadataRepository.findByParentFolderId(folderId)
                 .stream()
@@ -56,10 +52,10 @@ public class FolderService {
         Metadata parentFolder = findFolder(req.getParentFolderId());
 
         // 검증
-        folderValidator.validateTypeFolder(parentFolder.getType());
+        folderValidator.validateFolderType(parentFolder.getType());
         folderValidator.validateRootFolderUpdate(folder);
-        folderValidator.validateRecursion(req.getParentFolderId(), folderId);
-        folderValidator.validateFolderName(req.getFolderName(), req.getParentFolderId());
+        folderValidator.validateNoCircularMove(req.getParentFolderId(), folderId);
+        folderValidator.validateDuplicatedName(req.getFolderName(), req.getParentFolderId());
         folderValidator.validateChildFolderLimit(parentFolder.getId());
         folderValidator.validatePathLengthForUpdate(req.getUserId(), parentFolder.getPath(), folder.getPath(), folder.getName());
 
@@ -76,7 +72,7 @@ public class FolderService {
     @Transactional
     public void deleteFolder(Long folderId, DeleteFolderRequest req) {
         Metadata folder = findFolder(folderId);
-        folderValidator.validateTypeFolder(folder.getType());
+        folderValidator.validateFolderType(folder.getType());
         metadataRepository.deleteAllChildren(req.getUserId(), folder.getPath());
     }
 

@@ -3,7 +3,6 @@ package com.devnovus.oneBox.web.folder;
 import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
 import com.devnovus.oneBox.domain.*;
-import com.devnovus.oneBox.web.common.FolderValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ public class FolderValidatorTest {
     @DisplayName("메타데이터 타입 검증 테스트")
     void metadataTypeValidationTest() {
         // when & then
-        assertThatThrownBy(() -> folderValidator.validateTypeFolder(MetadataType.FILE))
+        assertThatThrownBy(() -> folderValidator.validateFolderType(MetadataType.FILE))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.NOT_A_FOLDER.getMessage());
     }
@@ -49,7 +48,7 @@ public class FolderValidatorTest {
                 childFolder.getName(), parentFolderId, MetadataType.FOLDER)).willReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> folderValidator.validateFolderName(childFolder.getName(), parentFolderId))
+        assertThatThrownBy(() -> folderValidator.validateDuplicatedName(childFolder.getName(), parentFolderId))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.FOLDER_NAME_DUPLICATED.getMessage());
     }
@@ -86,7 +85,7 @@ public class FolderValidatorTest {
         Long folderId = 1L;
 
         // when & then
-        assertThatThrownBy(() -> folderValidator.validateRecursion(folderId, folderId))
+        assertThatThrownBy(() -> folderValidator.validateNoCircularMove(folderId, folderId))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.FOLDER_CANNOT_MOVE_TO_DESCENDANT.getMessage());
     }

@@ -7,12 +7,12 @@ server:
       enabled: true
 
 spring:
+  application:
+    name: oneBox
   servlet:
     multipart:
       max-file-size: 20MB
       max-request-size: 100MB
-  application:
-    name: oneBox
   datasource:
     url: jdbc:postgresql://localhost:5432/one_box
     driver-class-name: org.postgresql.Driver
@@ -27,12 +27,17 @@ spring:
     ansi:
       enabled: ALWAYS
 
-app:
-  max-quota: 5GB
+storage:
+  max-quota: 5368709120 # 5GB
+
+minio:
+  port: 9000
+  host: localhost
+  access-key: one_box
+  secret-key: one_box_123
+  bucket: one-box-bucket
 
 logging:
   level:
     org.springframework: INFO
     org.hibernate: WARN
-    org.springframework.security.web.FilterChainProxy: DEBUG
-    org.springframework.security: TRACE

@@ -1,10 +1,7 @@
 package com.devnovus.oneBox.web.folder;
 
 import com.devnovus.oneBox.aop.dto.BaseResponse;
-import com.devnovus.oneBox.web.folder.dto.CreateFolderRequest;
-import com.devnovus.oneBox.web.folder.dto.DeleteFolderRequest;
-import com.devnovus.oneBox.web.folder.dto.MetadataResponse;
-import com.devnovus.oneBox.web.folder.dto.UpdateFolderRequest;
+import com.devnovus.oneBox.web.folder.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/folder")
+@RequestMapping("/folders")
 @RequiredArgsConstructor
 public class FolderController {
     private final FolderService folderService;

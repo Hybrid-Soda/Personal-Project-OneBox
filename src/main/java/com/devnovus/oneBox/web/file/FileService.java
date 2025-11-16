@@ -26,12 +26,12 @@ public class FileService {
         User user = userRepository.getReferenceById(req.getUserId());
         Metadata parentFolder = findFolder(req.getParentFolderId());
 
-        files.forEach(file -> {
+        List<Metadata> metadataList = files.stream().map(file -> {
             String path = parentFolder.getPath() + file.getName();
-            Metadata metadata = new Metadata(user, parentFolder, file.getName(), path, file.getSize(), file.getContentType());
+            return new Metadata(user, parentFolder, file.getName(), path, file.getSize(), file.getContentType());
+        }).toList();
 
-            metadataRepository.save(metadata);
-        });
+        metadataRepository.saveAll(metadataList);
     }
 
     public Metadata findFolder(Long folderId) {
