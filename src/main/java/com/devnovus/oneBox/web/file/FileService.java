@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @RequiredArgsConstructor
@@ -23,12 +24,14 @@ public class FileService {
 
     @Transactional
     public void uploadFile(Long userId, Long parentFolderId, List<MultipartFile> files) {
-        User user = userRepository.getReferenceById(userId);
+        User user = findUser(userId);
         Metadata parentFolder = findFolder(parentFolderId);
+        AtomicLong totSize = new AtomicLong(0);
 
         List<Metadata> metadataList = files.stream().map(file -> {
             String path = parentFolder.getPath() + file.getName();
             String objectName = fileHandler.upload(user.getId(), file);
+            totSize.addAndGet(file.getSize());
 
             return new Metadata(
                     user, parentFolder, file.getName(), path,
@@ -36,7 +39,13 @@ public class FileService {
             );
         }).toList();
 
+        user.setUsedQuota(user.getUsedQuota() + totSize.get());
         metadataRepository.saveAll(metadataList);
+    }
+
+    public User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
     }
 
     public Metadata findFolder(Long folderId) {

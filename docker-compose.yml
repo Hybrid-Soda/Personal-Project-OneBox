@@ -34,6 +34,20 @@ services:
           cpus: "1"
           memory: 2G
 
+  onebox:
+    image: devnovus/one-box:1.0
+    container_name: onebox
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+    depends_on:
+      - postgres
+      - minio
+
 volumes:
   postgres_data:
   minio_data:
