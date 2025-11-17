@@ -1,0 +1,23 @@
+package com.devnovus.oneBox.web.file.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.io.InputStream;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UploadFileDto {
+    private Long userId;
+    private Long parentFolderId;
+    private Long fileSize;
+    private String fileName;
+    private String contentType;
+    private InputStream inputStream;
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+}

@@ -3,6 +3,7 @@ package com.devnovus.oneBox.web.folder;
 import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
 import com.devnovus.oneBox.domain.*;
+import com.devnovus.oneBox.web.util.MetadataMapper;
 import com.devnovus.oneBox.web.folder.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class FolderService {
-    private final FolderMapper folderMapper;
+    private final MetadataMapper metadataMapper;
     private final UserRepository userRepository;
     private final FolderValidator folderValidator;
     private final MetadataRepository metadataRepository;
@@ -30,7 +31,7 @@ public class FolderService {
         folderValidator.validateChildFolderLimit(parentFolder.getId());
         folderValidator.validatePathLength(parentFolder.getPath(), req.getFolderName());
 
-        metadataRepository.save(folderMapper.createMetadata(user, parentFolder, req.getFolderName()));
+        metadataRepository.save(metadataMapper.createMetadata(user, parentFolder, req.getFolderName()));
     }
 
     /** 폴더조회 */
@@ -41,7 +42,7 @@ public class FolderService {
 
         return metadataRepository.findByParentFolderId(folderId)
                 .stream()
-                .map(folderMapper::createMetadataResponse)
+                .map(metadataMapper::createMetadataResponse)
                 .toList();
     }
 

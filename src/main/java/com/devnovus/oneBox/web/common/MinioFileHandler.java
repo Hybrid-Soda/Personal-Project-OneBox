@@ -2,6 +2,7 @@ package com.devnovus.oneBox.web.common;
 
 import com.devnovus.oneBox.aop.exception.ApplicationError;
 import com.devnovus.oneBox.aop.exception.ApplicationException;
+import com.devnovus.oneBox.web.file.dto.UploadFileDto;
 import io.minio.MinioClient;
 import io.minio.ObjectWriteResponse;
 import io.minio.PutObjectArgs;
@@ -24,20 +25,18 @@ public class MinioFileHandler {
     @Value("${minio.bucket}")
     private String bucketName;
 
-    public String upload(Long userId, MultipartFile file) {
-        String ext = FilenameUtils.getExtension(file.getOriginalFilename());
-        String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-        String objectName = String.format("%d/%s/%s.%s", userId, datePath, UUID.randomUUID(), ext);
+    public String upload(UploadFileDto dto, String ext) {
+        String objectName = String.format("%d/%s.%s", dto.getUserId(), UUID.randomUUID(), ext);
 
-        try (InputStream inputStream = file.getInputStream()) {
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .stream(inputStream, file.getSize(), -1)
-                            .contentType(file.getContentType())
-                            .build()
-            );
+        try (InputStream inputStream = dto.getInputStream()) {
+            PutObjectArgs args = PutObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .stream(inputStream, dto.getFileSize(), -1)
+                    .contentType(dto.getContentType())
+                    .build();
+
+            minioClient.putObject(args);
             return objectName;
         } catch (Exception e) {
             throw new ApplicationException(ApplicationError.FILE_UPLOAD_FAIL);

@@ -6,41 +6,45 @@ import com.devnovus.oneBox.domain.Metadata;
 import com.devnovus.oneBox.domain.MetadataRepository;
 import com.devnovus.oneBox.domain.User;
 import com.devnovus.oneBox.domain.UserRepository;
+import com.devnovus.oneBox.web.util.MetadataMapper;
 import com.devnovus.oneBox.web.common.MinioFileHandler;
+import com.devnovus.oneBox.web.file.dto.UploadFileDto;
+import com.devnovus.oneBox.web.util.MimeTypeResolver;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @RequiredArgsConstructor
 public class FileService {
+    private final MetadataMapper metadataMapper;
     private final MinioFileHandler fileHandler;
     private final UserRepository userRepository;
+    private final FileValidator fileValidator;
     private final MetadataRepository metadataRepository;
 
     @Transactional
-    public void uploadFile(Long userId, Long parentFolderId, List<MultipartFile> files) {
-        User user = findUser(userId);
-        Metadata parentFolder = findFolder(parentFolderId);
-        AtomicLong totSize = new AtomicLong(0);
+    public void uploadFile(UploadFileDto dto) {
+        User user = findUser(dto.getUserId());
+        Metadata parentFolder = findFolder(dto.getParentFolderId());
 
-        List<Metadata> metadataList = files.stream().map(file -> {
-            String path = parentFolder.getPath() + file.getName();
-            String objectName = fileHandler.upload(user.getId(), file);
-            totSize.addAndGet(file.getSize());
+        // MinIO 업로드
+        String ext = FilenameUtils.getExtension(dto.getFileName());
+        if (dto.getContentType() == null) {
+            String mimeType = MimeTypeResolver.getMimeType(ext);
+            dto.setContentType(mimeType);
+        }
+        String objectName = fileHandler.upload(dto, ext);
 
-            return new Metadata(
-                    user, parentFolder, file.getName(), path,
-                    file.getSize(), objectName, file.getContentType()
-            );
-        }).toList();
+        // 메타데이터 저장
+        Metadata metadata = metadataMapper.createMetadata(
+                user, parentFolder, dto.getFileName(), dto.getFileSize(), objectName, dto.getContentType()
+        );
+        metadataRepository.save(metadata);
 
-        user.setUsedQuota(user.getUsedQuota() + totSize.get());
-        metadataRepository.saveAll(metadataList);
+        // 유저 저장공간 사용량 합산
+        user.setUsedQuota(user.getUsedQuota() + dto.getFileSize());
     }
 
     public User findUser(Long userId) {
