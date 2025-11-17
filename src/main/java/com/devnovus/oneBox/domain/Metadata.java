@@ -42,7 +42,12 @@ public class Metadata extends BaseEntity {
     public Metadata() {}
 
     // 폴더 생성 시
-    public Metadata(User owner, Metadata parentFolder, String name, String path) {
+    public Metadata(
+            User owner,
+            Metadata parentFolder,
+            String name,
+            String path
+    ) {
         this.owner = owner;
         this.parentFolder = parentFolder;
         this.name = name;
@@ -51,14 +56,22 @@ public class Metadata extends BaseEntity {
     }
 
     // 파일 생성 시
-    public Metadata(User owner, Metadata parentFolder, String name, String path, Long size, String mimeType) {
+    public Metadata(
+            User owner,
+            Metadata parentFolder,
+            String name,
+            String path,
+            Long size,
+            String objectName,
+            String mimeType
+    ) {
         this.owner = owner;
         this.parentFolder = parentFolder;
         this.name = name;
         this.path = path;
         this.type = MetadataType.FILE;
         this.size = size;
-        this.fileMetadata = new FileMetadata(mimeType, UploadStatus.UPLOADING);
+        this.fileMetadata = new FileMetadata(objectName, mimeType, UploadStatus.UPLOADING);
     }
 
     public void setName(String name) {

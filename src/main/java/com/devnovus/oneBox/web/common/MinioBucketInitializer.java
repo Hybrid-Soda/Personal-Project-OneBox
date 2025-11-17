@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MinioInitializer {
+public class MinioBucketInitializer {
     private final MinioClient minioClient;
 
     @Value("${minio.bucket}")

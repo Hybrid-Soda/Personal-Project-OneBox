@@ -26,7 +26,8 @@ public enum ApplicationError implements ErrorCode {
     FILE_UNSUPPORTED_TYPE(HttpStatus.BAD_REQUEST, "지원되지 않는 파일 형식입니다.", 400),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND,"파일을 찾을 수 없습니다.", 404),
     FILE_NAME_DUPLICATED(HttpStatus.CONFLICT,"동일한 이름의 파일이 이미 존재합니다.", 409),
-    FILE_INSUFFICIENT_STORAGE(HttpStatus.PAYLOAD_TOO_LARGE, "사용 가능한 저장 용량이 부족합니다.", 413)
+    FILE_INSUFFICIENT_STORAGE(HttpStatus.PAYLOAD_TOO_LARGE, "사용 가능한 저장 용량이 부족합니다.", 413),
+    FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.", 500),
     ;
 
     private final HttpStatus httpStatus;

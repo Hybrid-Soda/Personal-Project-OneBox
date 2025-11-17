@@ -10,9 +10,14 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
     container_name: minio
     ports:
       - "9000:9000"
@@ -23,6 +28,11 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
 
 volumes:
   postgres_data:

@@ -11,8 +11,9 @@ spring:
     name: oneBox
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 100MB
+      enabled: true
+      max-file-size: 1GB
+      max-request-size: 2GB
   datasource:
     url: jdbc:postgresql://localhost:5432/one_box
     driver-class-name: org.postgresql.Driver
@@ -36,6 +37,12 @@ minio:
   access-key: one_box
   secret-key: one_box_123
   bucket: one-box-bucket
+
+management:
+  endpoints.web.exposure.include: ["prometheus", "health", "metrics"]
+  metrics:
+    export.prometheus.enabled: true
+    tags.application: oneBox
 
 logging:
   level:
