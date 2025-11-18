@@ -5,6 +5,7 @@ import com.devnovus.oneBox.domain.file.dto.UpdateFileNameRequest;
 import com.devnovus.oneBox.domain.file.util.FileValidator;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
+import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
@@ -55,9 +56,13 @@ public class FileManagementService {
     @Transactional
     public void removeFile(Long fileId) {
         Metadata file = findMetadata(fileId);
+        User owner = file.getOwner();
+
         fileValidator.validateFileType(file.getType());
+
         metadataRepository.delete(file);
         minioFileService.delete(file.getFileMetadata().getObjectName());
+        owner.setUsedQuota(owner.getUsedQuota() - file.getSize());
     }
 
     private Metadata findMetadata(Long folderId) {

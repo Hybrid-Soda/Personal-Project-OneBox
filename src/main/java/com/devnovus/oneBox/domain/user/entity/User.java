@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "users")
 public class User extends BaseEntity {
     // 현재 사용량 (단위: Byte, 기본값: 0B)
-    @Column(name = "used_quota", updatable = false)
+    @Column(name = "used_quota", nullable = false)
     private Long usedQuota = 0L;
 
     // 현재 사용량 수정
