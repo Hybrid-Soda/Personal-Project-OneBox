@@ -39,6 +39,8 @@ services:
     container_name: onebox
     ports:
       - "8080:8080"
+    storage_opt:
+      size: 30G
     deploy:
       resources:
         limits:

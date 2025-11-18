@@ -1,9 +1,10 @@
 package com.devnovus.oneBox.web.file;
 
-import com.devnovus.oneBox.aop.exception.ApplicationError;
-import com.devnovus.oneBox.aop.exception.ApplicationException;
-import com.devnovus.oneBox.domain.MetadataRepository;
-import com.devnovus.oneBox.domain.MetadataType;
+import com.devnovus.oneBox.global.exception.ApplicationError;
+import com.devnovus.oneBox.global.exception.ApplicationException;
+import com.devnovus.oneBox.domain.file.util.FileValidator;
+import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
+import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

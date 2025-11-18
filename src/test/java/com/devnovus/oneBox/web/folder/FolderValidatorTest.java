@@ -1,8 +1,12 @@
 package com.devnovus.oneBox.web.folder;
 
-import com.devnovus.oneBox.aop.exception.ApplicationError;
-import com.devnovus.oneBox.aop.exception.ApplicationException;
-import com.devnovus.oneBox.domain.*;
+import com.devnovus.oneBox.global.exception.ApplicationError;
+import com.devnovus.oneBox.global.exception.ApplicationException;
+import com.devnovus.oneBox.domain.metadata.entity.Metadata;
+import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
+import com.devnovus.oneBox.domain.user.entity.User;
+import com.devnovus.oneBox.domain.folder.util.FolderValidator;
+import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,8 +30,18 @@ public class FolderValidatorTest {
     @BeforeEach
     void setUp() {
         User user = new User();
-        rootFolder = new Metadata(user, null, "root", "/");
-        childFolder = new Metadata(user, rootFolder, "child", "/child/");
+        rootFolder = Metadata.builder()
+                .owner(user)
+                .parentFolder(null)
+                .name("root")
+                .path("/")
+                .build();
+        childFolder = Metadata.builder()
+                .owner(user)
+                .parentFolder(rootFolder)
+                .name("child")
+                .path("/child/")
+                .build();
     }
 
     @Test
