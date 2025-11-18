@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("FolderService – 폴더 생성 검증 테스트")
+@DisplayName("폴더 검증 테스트")
 public class FolderValidatorTest {
     @Mock private MetadataRepository metadataRepository;
     @InjectMocks private FolderValidator folderValidator;

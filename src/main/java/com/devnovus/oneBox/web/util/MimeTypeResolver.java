@@ -11,6 +11,8 @@ public class MimeTypeResolver {
             Map.entry("gz", "application/gzip"),
             Map.entry("tar", "application/x-tar"),
             Map.entry("xml", "application/xml"),
+            Map.entry("exe", "application/x-msdownload"),
+            Map.entry("sh", "application/x-sh"),
             // 오디오
             Map.entry("mp3", "audio/mpeg"),
             Map.entry("aac", "audio/aac"),

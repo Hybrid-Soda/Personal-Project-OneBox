@@ -7,6 +7,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum ApplicationError implements ErrorCode {
+    // common
+    MISSING_REQUIRED_HEADER(HttpStatus.BAD_REQUEST, "필수 요청 헤더가 누락되었습니다.", 400),
+
     // user
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED,"접근 권한이 없습니다.", 401),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,"유저가 존재하지 않습니다.", 404),

@@ -25,15 +25,20 @@ public class FileController {
     public ResponseEntity<BaseResponse<String>> uploadFile(
             HttpServletRequest req,
             @RequestPart("file") MultipartFile file
-    ) throws IOException {
+    ) {
         try (InputStream inputStream = file.getInputStream()) {
-            long userId = Long.parseLong(req.getHeader("User-Id"));
-            long parentFolderId = Long.parseLong(req.getHeader("Parent-Folder-Id"));
+            // 헤더 추출
+            long userId = Long.parseLong(requiredHeader(req, "User-Id"));
+            long parentFolderId = Long.parseLong(requiredHeader(req, "Parent-Folder-Id"));
 
-            fileService.uploadFile(new UploadFileDto(
+            // Dto 생성
+            UploadFileDto dto = new UploadFileDto(
                     userId, parentFolderId, file.getSize(),
                     file.getOriginalFilename(), file.getContentType(), inputStream
-            ));
+            );
+
+            // 업로드 수행
+            fileService.uploadFile(dto);
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 완료"));
         } catch (IOException e) {
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 실패: " + e));
@@ -43,18 +48,32 @@ public class FileController {
     @PostMapping("/upload-stream")
     public ResponseEntity<BaseResponse<String>> uploadFile(HttpServletRequest req) {
         try (InputStream inputStream = req.getInputStream()) {
-            long userId = Long.parseLong(req.getHeader("User-Id"));
-            long parentFolderId = Long.parseLong(req.getHeader("Parent-Folder-Id"));
-            String originalFilename = req.getHeader("Original-Filename");
+            // 헤더 추출
+            long userId = Long.parseLong(requiredHeader(req, "User-Id"));
+            long parentFolderId = Long.parseLong(requiredHeader(req, "Parent-Folder-Id"));
+            String originalFilename = requiredHeader(req, "Original-Filename");
 
-
-            fileService.uploadFile(new UploadFileDto(
+            // Dto 생성
+            UploadFileDto dto = new UploadFileDto(
                     userId, parentFolderId, req.getContentLengthLong(),
                     originalFilename, null, inputStream
-            ));
+            );
+
+            // 업로드 수행
+            fileService.uploadFile(dto);
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 완료"));
         } catch (IOException e) {
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 실패: " + e));
         }
+    }
+
+    private String requiredHeader(HttpServletRequest req, String name) {
+        String value = req.getHeader(name);
+
+        if (value == null || value.isBlank()) {
+            throw new ApplicationException(ApplicationError.MISSING_REQUIRED_HEADER);
+        }
+
+        return value;
     }
 }

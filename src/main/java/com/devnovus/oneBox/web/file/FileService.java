@@ -29,22 +29,20 @@ public class FileService {
         User user = findUser(dto.getUserId());
         Metadata parentFolder = findFolder(dto.getParentFolderId());
 
-        // MinIO 업로드
+        // 확장자와 MIME 타입 추출
         String ext = FilenameUtils.getExtension(dto.getFileName());
         if (dto.getContentType() == null) {
             String mimeType = MimeTypeResolver.getMimeType(ext);
             dto.setContentType(mimeType);
         }
-        String objectName = fileHandler.upload(dto, ext);
 
-        // 메타데이터 저장
-        Metadata metadata = metadataMapper.createMetadata(
+        fileValidator.validateForUpload(dto, user.getUsedQuota());  // 파일 검증
+        String objectName = fileHandler.upload(dto, ext);           // 스토리지 업로드
+        Metadata metadata = metadataMapper.createMetadata(          // 메타데이터 저장
                 user, parentFolder, dto.getFileName(), dto.getFileSize(), objectName, dto.getContentType()
         );
         metadataRepository.save(metadata);
-
-        // 유저 저장공간 사용량 합산
-        user.setUsedQuota(user.getUsedQuota() + dto.getFileSize());
+        user.setUsedQuota(user.getUsedQuota() + dto.getFileSize()); // 유저 저장공간 사용량 합산
     }
 
     public User findUser(Long userId) {
