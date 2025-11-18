@@ -50,4 +50,5 @@ logging:
   level:
     org:
       springframework: INFO
+#      springframework: TRACE
       hibernate: WARN

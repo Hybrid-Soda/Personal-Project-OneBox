@@ -3,7 +3,7 @@ package com.devnovus.oneBox.domain.file.controller;
 import com.devnovus.oneBox.global.response.BaseResponse;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
-import com.devnovus.oneBox.domain.file.service.FileService;
+import com.devnovus.oneBox.domain.file.service.FileDataService;
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +17,10 @@ import java.io.InputStream;
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
-public class FileController {
-    private final FileService fileService;
+public class FileDataController {
+    private final FileDataService fileService;
 
+    /** 파일업로드 - multipart 방식 */
     @PostMapping("/upload")
     public ResponseEntity<BaseResponse<String>> uploadFile(
             HttpServletRequest req,
@@ -44,6 +45,7 @@ public class FileController {
         }
     }
 
+    /** 파일업로드 - binary stream 방식 */
     @PostMapping("/upload-stream")
     public ResponseEntity<BaseResponse<String>> uploadFile(HttpServletRequest req) {
         try (InputStream inputStream = req.getInputStream()) {
@@ -66,21 +68,9 @@ public class FileController {
         }
     }
 
-    @GetMapping("/pre-signed")
-    public ResponseEntity<BaseResponse<String>> getPreSignedUrl(HttpServletRequest req) {
-        // 헤더 추출
-        long userId = Long.parseLong(requiredHeader(req, "User-Id"));
-        long parentFolderId = Long.parseLong(requiredHeader(req, "Parent-Folder-Id"));
-        long fileSize = Long.parseLong(requiredHeader(req, "File-Size"));
-        String originalFilename = requiredHeader(req, "Original-Filename");
-
-        // Dto 생성
-        UploadFileDto dto = new UploadFileDto(userId, parentFolderId, fileSize, originalFilename, null, null);
-
-        // 업로드 수행
-        String url = fileService.getPreSignedUrl(dto);
-        return ResponseEntity.status(201).body(BaseResponse.of(url));
-    }
+    /** 파일다운로드 */
+    @GetMapping("/{fileId}/download")
+    public void downloadFile() {}
 
     private String requiredHeader(HttpServletRequest req, String name) {
         String value = req.getHeader(name);

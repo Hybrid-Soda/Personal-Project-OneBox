@@ -14,12 +14,12 @@ import lombok.Getter;
 public class Metadata extends BaseEntity {
     // 소유자
     @JoinColumn(name = "owner_id")
-    @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
 
     // 상위폴더
     @JoinColumn(name = "parent_folder_id")
-    @ManyToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Metadata parentFolder;
 
     // 이름
@@ -37,7 +37,7 @@ public class Metadata extends BaseEntity {
 
     // 크기
     @Column(nullable = false)
-    private Long size = 0L;
+    private Long size;
 
     // 타입이 파일인 경우
     @Embedded
@@ -55,7 +55,7 @@ public class Metadata extends BaseEntity {
         this.name = name;
         this.path = path;
         this.type = type;
-        this.size = size;
+        this.size = (size == null ? 0L : size);
 
         if (objectName != null) {
             this.fileMetadata = new FileMetadata(objectName, mimeType, UploadStatus.UPLOADING);
@@ -64,6 +64,10 @@ public class Metadata extends BaseEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 
     public void setParentFolder(Metadata parentFolder) {

@@ -27,6 +27,12 @@ public class FileValidator {
         validateStorageQuota(usedQuota, dto.getFileSize());
     }
 
+    /** 수정 파일 검증 */
+    public void validateForUpdate(MetadataType type, Long parentFolderId, String fileName) {
+        validateFileType(type);
+        validateDuplicateName(parentFolderId, fileName);
+    }
+
     /** 메타데이터 타입 검증 */
     public void validateFileType(MetadataType type) {
         if (type != MetadataType.FILE) throw new ApplicationException(ApplicationError.NOT_A_FILE);

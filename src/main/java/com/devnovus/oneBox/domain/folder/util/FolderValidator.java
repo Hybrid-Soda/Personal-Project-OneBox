@@ -1,5 +1,7 @@
 package com.devnovus.oneBox.domain.folder.util;
 
+import com.devnovus.oneBox.domain.folder.dto.CreateFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.UpdateFolderRequest;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
@@ -15,6 +17,24 @@ import static com.devnovus.oneBox.global.constant.CommonConstant.MAX_PATH_LENGTH
 @RequiredArgsConstructor
 public class FolderValidator {
     private final MetadataRepository metadataRepository;
+
+    /** 파일 생성 시 검증 */
+    public void validateForCreate(Metadata parentFolder, String folderName) {
+        validateFolderType(parentFolder.getType());
+        validateDuplicatedName(folderName, parentFolder.getId());
+        validateChildFolderLimit(parentFolder.getId());
+        validatePathLength(parentFolder.getPath(), folderName);
+    }
+
+    /** 파일 수정 시 검증 */
+    public void validateForUpdate(Metadata parentFolder, Metadata folder, UpdateFolderRequest req) {
+        validateFolderType(parentFolder.getType());
+        validateRootFolderUpdate(folder);
+        validateNoCircularMove(parentFolder.getId(), folder.getId());
+        validateDuplicatedName(req.getFolderName(), parentFolder.getId());
+        validateChildFolderLimit(parentFolder.getId());
+        validatePathLengthForUpdate(req.getUserId(), parentFolder.getPath(), folder.getPath(), folder.getName());
+    }
 
     /** 폴더 타입 여부 검증 */
     public void validateFolderType(MetadataType type) {

@@ -17,17 +17,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class FileService {
+public class FileDataService {
     private final MetadataMapper metadataMapper;
-    private final MinioFileHandler fileHandler;
+    private final MinioFileService fileHandler;
     private final UserRepository userRepository;
     private final FileValidator fileValidator;
     private final MetadataRepository metadataRepository;
 
+    /** 파일업로드 */
     @Transactional
     public void uploadFile(UploadFileDto dto) {
         User user = findUser(dto.getUserId());
-        Metadata parentFolder = findFolder(dto.getParentFolderId());
+        Metadata parentFolder = findMetadata(dto.getParentFolderId());
 
         // 확장자와 MIME 타입 추출
         String ext = FilenameUtils.getExtension(dto.getFileName());
@@ -45,27 +46,16 @@ public class FileService {
         user.setUsedQuota(user.getUsedQuota() + dto.getFileSize()); // 유저 저장공간 사용량 합산
     }
 
-    public String getPreSignedUrl(UploadFileDto dto) {
-        User user = findUser(dto.getUserId());
-        Metadata parentFolder = findFolder(dto.getParentFolderId());
-
-        String ext = FilenameUtils.getExtension(dto.getFileName());
-        if (dto.getContentType() == null) {
-            String mimeType = MimeTypeResolver.getMimeType(ext);
-            dto.setContentType(mimeType);
-        }
-
-        fileValidator.validateForUpload(dto, user.getUsedQuota());
-        return fileHandler.getPresignedUrl(dto, ext);
-    }
+    @Transactional
+    public void downloadFile() {}
 
     private User findUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
     }
 
-    private Metadata findFolder(Long folderId) {
-        return metadataRepository.findById(folderId)
+    private Metadata findMetadata(Long metadataId) {
+        return metadataRepository.findById(metadataId)
                 .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
     }
 }

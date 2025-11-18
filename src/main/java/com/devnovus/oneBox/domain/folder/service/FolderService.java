@@ -30,21 +30,16 @@ public class FolderService {
     @Transactional
     public void createFolder(CreateFolderRequest req) {
         User user = userRepository.getReferenceById(req.getUserId());
-        Metadata parentFolder = findFolder(req.getParentFolderId());
+        Metadata parentFolder = findMetadata(req.getParentFolderId());
 
-        // 검증
-        folderValidator.validateFolderType(parentFolder.getType());
-        folderValidator.validateDuplicatedName(req.getFolderName(), req.getParentFolderId());
-        folderValidator.validateChildFolderLimit(parentFolder.getId());
-        folderValidator.validatePathLength(parentFolder.getPath(), req.getFolderName());
-
+        folderValidator.validateForCreate(parentFolder, req.getFolderName());
         metadataRepository.save(metadataMapper.createMetadata(user, parentFolder, req.getFolderName()));
     }
 
     /** 폴더조회 */
     @Transactional(readOnly = true)
     public List<MetadataResponse> getListInFolder(Long folderId) {
-        Metadata folder = findFolder(folderId);
+        Metadata folder = findMetadata(folderId);
         folderValidator.validateFolderType(folder.getType());
 
         return metadataRepository.findByParentFolderId(folderId)
@@ -56,16 +51,11 @@ public class FolderService {
     /** 폴더수정 */
     @Transactional
     public void updateFolder(Long folderId, UpdateFolderRequest req) {
-        Metadata folder = findFolder(folderId);
-        Metadata parentFolder = findFolder(req.getParentFolderId());
+        Metadata folder = findMetadata(folderId);
+        Metadata parentFolder = findMetadata(req.getParentFolderId());
 
         // 검증
-        folderValidator.validateFolderType(parentFolder.getType());
-        folderValidator.validateRootFolderUpdate(folder);
-        folderValidator.validateNoCircularMove(req.getParentFolderId(), folderId);
-        folderValidator.validateDuplicatedName(req.getFolderName(), req.getParentFolderId());
-        folderValidator.validateChildFolderLimit(parentFolder.getId());
-        folderValidator.validatePathLengthForUpdate(req.getUserId(), parentFolder.getPath(), folder.getPath(), folder.getName());
+        folderValidator.validateForUpdate(parentFolder, folder, req);
 
         // 이름과 상위 폴더 수정
         folder.setName(req.getFolderName());
@@ -79,13 +69,13 @@ public class FolderService {
     /** 폴더삭제 */
     @Transactional
     public void deleteFolder(Long folderId, DeleteFolderRequest req) {
-        Metadata folder = findFolder(folderId);
+        Metadata folder = findMetadata(folderId);
         folderValidator.validateFolderType(folder.getType());
         metadataRepository.deleteAllChildren(req.getUserId(), folder.getPath());
     }
 
-    private Metadata findFolder(Long folderId) {
-        return metadataRepository.findById(folderId)
+    private Metadata findMetadata(Long metadataId) {
+        return metadataRepository.findById(metadataId)
                 .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
     }
 }
