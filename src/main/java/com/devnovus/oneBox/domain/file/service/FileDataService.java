@@ -1,5 +1,6 @@
 package com.devnovus.oneBox.domain.file.service;
 
+import com.devnovus.oneBox.domain.file.dto.DownloadFileDto;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
@@ -10,16 +11,19 @@ import com.devnovus.oneBox.domain.file.util.FileValidator;
 import com.devnovus.oneBox.domain.metadata.util.MetadataMapper;
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import com.devnovus.oneBox.global.util.MimeTypeResolver;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+
 @Service
 @RequiredArgsConstructor
 public class FileDataService {
     private final MetadataMapper metadataMapper;
-    private final MinioFileService fileHandler;
+    private final MinioFileService minioFileService;
     private final UserRepository userRepository;
     private final FileValidator fileValidator;
     private final MetadataRepository metadataRepository;
@@ -38,7 +42,7 @@ public class FileDataService {
         }
 
         fileValidator.validateForUpload(dto, user.getUsedQuota());  // 파일 검증
-        String objectName = fileHandler.upload(dto, ext);           // 스토리지 업로드
+        String objectName = minioFileService.upload(dto, ext);      // 스토리지 업로드
         Metadata metadata = metadataMapper.createMetadata(          // 메타데이터 저장
                 user, parentFolder, dto.getFileName(), dto.getFileSize(), objectName, dto.getContentType()
         );
@@ -47,7 +51,14 @@ public class FileDataService {
     }
 
     @Transactional
-    public void downloadFile() {}
+    public DownloadFileDto downloadFile(HttpServletResponse res, Long fileId) {
+        Metadata metadata = findMetadata(fileId);
+        fileValidator.validateFileType(metadata.getType());
+
+        InputStream stream = minioFileService.download(metadata.getFileMetadata().getObjectName());
+
+        return new DownloadFileDto(metadata.getSize(), metadata.getName(), metadata.getFileMetadata().getMimeType(), stream);
+    }
 
     private User findUser(Long userId) {
         return userRepository.findById(userId)
