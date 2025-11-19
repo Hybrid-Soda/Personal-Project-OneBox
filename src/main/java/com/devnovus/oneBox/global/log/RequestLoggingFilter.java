@@ -31,11 +31,17 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         String userAgent = request.getHeader("User-Agent");
         String clientIp = getClientIp(request);
 
+        boolean isMonitoring = uri.equals("/api/v1/actuator/prometheus");
+
         // 요청 로그
-        log.info("[REQ] {} {}{} | IP: {} | UA: {}", method, uri, query, clientIp, userAgent);
+        if (!isMonitoring) {
+            log.info("[REQ] {} {}{} | IP: {} | UA: {}", method, uri, query, clientIp, userAgent);
+        }
 
         // 다음 필터 실행
         filterChain.doFilter(request, response);
+
+        if (isMonitoring) return;
 
         long duration = System.currentTimeMillis() - start;
 

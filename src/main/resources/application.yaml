@@ -15,8 +15,8 @@ spring:
       max-file-size: 1GB
       max-request-size: 2GB
   datasource:
-    url: jdbc:postgresql://localhost:5432/one_box
-#    url: jdbc:postgresql://postgres:5432/one_box
+#    url: jdbc:postgresql://localhost:5432/one_box
+    url: jdbc:postgresql://postgres:5432/one_box
     driver-class-name: org.postgresql.Driver
     username: one_box
     password: one_box_123
@@ -24,7 +24,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+#    show-sql: true
   output:
     ansi:
       enabled: ALWAYS
@@ -34,8 +34,8 @@ storage:
 
 minio:
   port: 9000
-  host: localhost
-#  host: minio
+#  host: localhost
+  host: minio
   access-key: one_box
   secret-key: one_box_123
   bucket: one-box-bucket
@@ -49,6 +49,6 @@ management:
 logging:
   level:
     org:
-#      springframework: INFO
-      springframework: TRACE
+      springframework: INFO
+#      springframework: TRACE
       hibernate: WARN
