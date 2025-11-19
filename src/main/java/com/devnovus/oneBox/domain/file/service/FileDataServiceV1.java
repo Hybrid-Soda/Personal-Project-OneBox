@@ -1,6 +1,8 @@
 package com.devnovus.oneBox.domain.file.service;
 
+import com.devnovus.oneBox.domain.file.Repository.FileRepository;
 import com.devnovus.oneBox.domain.file.dto.DownloadFileDto;
+import com.devnovus.oneBox.domain.metadata.enums.UploadStatus;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
@@ -11,53 +13,71 @@ import com.devnovus.oneBox.domain.file.util.FileValidator;
 import com.devnovus.oneBox.domain.metadata.util.MetadataMapper;
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import com.devnovus.oneBox.global.util.MimeTypeResolver;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class FileDataService {
-    private final MetadataMapper metadataMapper;
-    private final MinioFileService minioFileService;
-    private final UserRepository userRepository;
+public class FileDataServiceV1 {
     private final FileValidator fileValidator;
+    private final MetadataMapper metadataMapper;
+    private final FileRepository fileRepository;
+    private final UserRepository userRepository;
     private final MetadataRepository metadataRepository;
 
     /** 파일업로드 */
     @Transactional
     public void uploadFile(UploadFileDto dto) {
+        // 파일 검증
         User user = findUser(dto.getUserId());
-        Metadata parentFolder = findMetadata(dto.getParentFolderId());
+        String objectName = getObjectName(dto);
+        fileValidator.validateForUpload(dto, user.getUsedQuota());
 
-        // 확장자와 MIME 타입 추출
-        String ext = FilenameUtils.getExtension(dto.getFileName());
-        if (dto.getContentType() == null) {
-            String mimeType = MimeTypeResolver.getMimeType(ext);
-            dto.setContentType(mimeType);
+        // 메타데이터 생성
+        Metadata parentFolder = findMetadata(dto.getParentFolderId());
+        Metadata metadata = metadataMapper.createMetadata(user, parentFolder, objectName, dto);
+        metadataRepository.save(metadata);
+
+        // 유저 저장공간 반영
+        user.plusUsedQuota(dto.getFileSize());
+
+        // 스토리지 업로드
+        String eTag = fileRepository.save(dto, objectName);
+
+        // 스토리지 업로드 오류 시 보상 트랜잭션 작동
+        if (eTag == null || eTag.isBlank()) {
+            user.minusUsedQuota(dto.getFileSize());
+            metadata.getFileMetadata().setUploadStatus(UploadStatus.FAIL);
+            throw new ApplicationException(ApplicationError.E_TAG_NOT_RETURNED);
         }
 
-        fileValidator.validateForUpload(dto, user.getUsedQuota());  // 파일 검증
-        String objectName = minioFileService.upload(dto, ext);      // 스토리지 업로드
-        Metadata metadata = metadataMapper.createMetadata(          // 메타데이터 저장
-                user, parentFolder, dto.getFileName(), dto.getFileSize(), objectName, dto.getContentType()
-        );
-        metadataRepository.save(metadata);
-        user.setUsedQuota(user.getUsedQuota() + dto.getFileSize()); // 유저 저장공간 사용량 합산
+        metadata.getFileMetadata().setUploadStatus(UploadStatus.DONE);
     }
 
     @Transactional
-    public DownloadFileDto downloadFile(HttpServletResponse res, Long fileId) {
+    public DownloadFileDto downloadFile(Long fileId) {
         Metadata metadata = findMetadata(fileId);
         fileValidator.validateFileType(metadata.getType());
 
-        InputStream stream = minioFileService.download(metadata.getFileMetadata().getObjectName());
+        InputStream stream = fileRepository.download(metadata.getFileMetadata().getObjectName());
 
         return new DownloadFileDto(metadata.getSize(), metadata.getName(), metadata.getFileMetadata().getMimeType(), stream);
+    }
+
+    private String getObjectName(UploadFileDto dto) {
+        String extension = FilenameUtils.getExtension(dto.getFileName());
+
+        if (dto.getContentType() == null) {
+            String mimeType = MimeTypeResolver.getMimeType(extension);
+            dto.setContentType(mimeType);
+        }
+
+        return String.format("%d/%s.%s", dto.getUserId(), UUID.randomUUID(), extension);
     }
 
     private User findUser(Long userId) {

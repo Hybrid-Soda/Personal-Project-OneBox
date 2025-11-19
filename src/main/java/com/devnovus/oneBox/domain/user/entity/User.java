@@ -17,7 +17,11 @@ public class User extends BaseEntity {
     private Long usedQuota = 0L;
 
     // 현재 사용량 수정
-    public void setUsedQuota(Long usedQuota) {
-        this.usedQuota = usedQuota;
+    public void plusUsedQuota(Long usedQuota) {
+        this.usedQuota += usedQuota;
+    }
+
+    public void minusUsedQuota(Long usedQuota) {
+        this.usedQuota -= usedQuota;
     }
 }

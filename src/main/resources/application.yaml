@@ -49,6 +49,6 @@ management:
 logging:
   level:
     org:
-      springframework: INFO
-#      springframework: TRACE
+#      springframework: INFO
+      springframework: TRACE
       hibernate: WARN

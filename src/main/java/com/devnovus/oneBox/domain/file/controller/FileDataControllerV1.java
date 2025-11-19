@@ -1,10 +1,11 @@
 package com.devnovus.oneBox.domain.file.controller;
 
 import com.devnovus.oneBox.domain.file.dto.DownloadFileDto;
+import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.global.response.BaseResponse;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
-import com.devnovus.oneBox.domain.file.service.FileDataService;
+import com.devnovus.oneBox.domain.file.service.FileDataServiceV1;
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,10 +22,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@RequestMapping("/files")
+@RequestMapping("/files/v1")
 @RequiredArgsConstructor
-public class FileDataController {
-    private final FileDataService fileService;
+public class FileDataControllerV1 {
+    private final FileDataServiceV1 fileService;
 
     /** 파일업로드 - multipart 방식 */
     @PostMapping("/upload")
@@ -53,7 +54,7 @@ public class FileDataController {
 
     /** 파일업로드 - binary stream 방식 */
     @PostMapping("/upload-stream")
-    public ResponseEntity<BaseResponse<String>> uploadFile(
+    public ResponseEntity<BaseResponse<String>> uploadFileOneBlock(
             HttpServletRequest req
     ) {
         try (InputStream inputStream = req.getInputStream()) {
@@ -82,7 +83,7 @@ public class FileDataController {
             HttpServletResponse res,
             @PathVariable Long fileId
     ) throws IOException {
-        DownloadFileDto dto = fileService.downloadFile(res, fileId);
+        DownloadFileDto dto = fileService.downloadFile(fileId);
 
         res.setContentType(dto.getMimeType());
         res.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(dto.getFileSize()));

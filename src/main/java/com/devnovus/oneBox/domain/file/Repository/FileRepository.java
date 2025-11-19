@@ -1,27 +1,26 @@
-package com.devnovus.oneBox.domain.file.service;
+package com.devnovus.oneBox.domain.file.Repository;
 
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
+import com.devnovus.oneBox.global.exception.ApplicationError;
+import com.devnovus.oneBox.global.exception.ApplicationException;
 import io.minio.*;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.UUID;
 
-@Service
+@Slf4j
+@Component
 @RequiredArgsConstructor
-public class MinioFileService {
-    private final HttpServletResponse response;
-    private final MinioClient minioClient;
-
+public class FileRepository {
     @Value("${minio.bucket}")
     private String bucketName;
 
-    public String upload(UploadFileDto dto, String ext) {
-        String objectName = String.format("%d/%s.%s", dto.getUserId(), UUID.randomUUID(), ext);
+    private final MinioClient minioClient;
 
+    public String save(UploadFileDto dto, String objectName) {
         try (InputStream inputStream = dto.getInputStream()) {
             PutObjectArgs args = PutObjectArgs.builder()
                     .bucket(bucketName)
@@ -30,10 +29,11 @@ public class MinioFileService {
                     .contentType(dto.getContentType())
                     .build();
 
-            minioClient.putObject(args);
-            return objectName;
+            String eTag = minioClient.putObject(args).etag();
+            log.info("MinioFileService.upload / objectName: {} / ETag: {}", objectName, eTag);
+            return eTag;
         } catch (Exception e) {
-            throw new RuntimeException("파일 업로드에 실패했습니다: " + e);
+            throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
         }
     }
 
@@ -44,9 +44,11 @@ public class MinioFileService {
                     .object(objectName)
                     .build();
 
-            return (InputStream) minioClient.getObject(args);
+            InputStream stream = minioClient.getObject(args);
+            log.info("MinioFileService.download / objectName: {}", objectName);
+            return stream;
         } catch (Exception e) {
-            throw new RuntimeException("파일 다운로드에 실패했습니다: " + e);
+            throw new ApplicationException(ApplicationError.FILE_NOT_DOWNLOADED);
         }
     }
 
@@ -58,8 +60,9 @@ public class MinioFileService {
                     .build();
 
             minioClient.removeObject(args);
+            log.info("MinioFileService.delete / objectName: {}", objectName);
         } catch (Exception e) {
-            throw new RuntimeException("파일 삭제에 실패했습니다: " + e);
+            throw new ApplicationException(ApplicationError.FILE_NOT_DELETED);
         }
     }
 }

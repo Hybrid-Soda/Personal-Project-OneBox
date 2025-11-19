@@ -14,7 +14,7 @@ public enum ApplicationError implements ErrorCode {
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED,"접근 권한이 없습니다.", 401),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,"유저가 존재하지 않습니다.", 404),
 
-    // folder
+    // metadata - folder
     NOT_A_FOLDER(HttpStatus.BAD_REQUEST,"폴더 타입이 아닙니다.", 400),
     FOLDER_PATH_LENGTH_EXCEEDED(HttpStatus.BAD_REQUEST,"경로 길이 제한을 초과했습니다.", 400),
     FOLDER_CHILD_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,"하위 폴더 최대 개수를 초과했습니다.", 400),
@@ -23,13 +23,18 @@ public enum ApplicationError implements ErrorCode {
     FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND,"폴더를 찾을 수 없습니다.", 404),
     FOLDER_NAME_DUPLICATED(HttpStatus.CONFLICT,"동일한 이름의 폴더가 이미 존재합니다.", 409),
 
-    // file
+    // metadata - file
     NOT_A_FILE(HttpStatus.BAD_REQUEST,"파일 타입이 아닙니다.", 400),
     FILE_INVALID_NAME(HttpStatus.BAD_REQUEST,"파일명이 길이 제한을 초과했거나 허용되지 않은 문자를 포함합니다.", 400),
     FILE_UNSUPPORTED_TYPE(HttpStatus.BAD_REQUEST, "지원되지 않는 파일 형식입니다.", 400),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND,"파일을 찾을 수 없습니다.", 404),
     FILE_NAME_DUPLICATED(HttpStatus.CONFLICT,"동일한 이름의 파일이 이미 존재합니다.", 409),
     FILE_INSUFFICIENT_STORAGE(HttpStatus.PAYLOAD_TOO_LARGE, "사용 가능한 저장 용량이 부족합니다.", 413),
+
+    E_TAG_NOT_RETURNED(HttpStatus.INTERNAL_SERVER_ERROR,"ETag가 비어있습니다.", 500),
+    FILE_NOT_SAVED(HttpStatus.INTERNAL_SERVER_ERROR,"파일 업로드에 실패했습니다.", 500),
+    FILE_NOT_DOWNLOADED(HttpStatus.INTERNAL_SERVER_ERROR,"파일 다운로드에 실패했습니다.", 500),
+    FILE_NOT_DELETED(HttpStatus.INTERNAL_SERVER_ERROR,"파일 삭제에 실패했습니다.", 500),
     ;
 
     private final HttpStatus httpStatus;

@@ -1,5 +1,6 @@
 package com.devnovus.oneBox.domain.metadata.util;
 
+import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import com.devnovus.oneBox.domain.user.entity.User;
@@ -25,19 +26,19 @@ public class MetadataMapper {
 
     // 파일 메타데이터 엔티티 생성
     public Metadata createMetadata(
-            User user, Metadata parentFolder, String fileName, Long size, String objectName, String mimeType
+            User user, Metadata parentFolder, String objectName, UploadFileDto dto
     ) {
-        String path = parentFolder.getPath() + fileName;
+        String path = parentFolder.getPath() + dto.getFileName();
 
         return Metadata.builder()
                 .owner(user)
                 .parentFolder(parentFolder)
-                .name(fileName)
+                .name(dto.getFileName())
                 .path(path)
                 .type(MetadataType.FILE)
-                .size(size)
+                .size(dto.getFileSize())
                 .objectName(objectName)
-                .mimeType(mimeType)
+                .mimeType(dto.getContentType())
                 .build();
     }
 

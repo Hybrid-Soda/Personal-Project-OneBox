@@ -1,5 +1,6 @@
 package com.devnovus.oneBox.domain.file.service;
 
+import com.devnovus.oneBox.domain.file.Repository.FileRepository;
 import com.devnovus.oneBox.domain.file.dto.MoveFileRequest;
 import com.devnovus.oneBox.domain.file.dto.UpdateFileNameRequest;
 import com.devnovus.oneBox.domain.file.util.FileValidator;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FileManagementService {
     private final FileValidator fileValidator;
-    private final MinioFileService minioFileService;
+    private final FileRepository fileRepository;
     private final MetadataRepository metadataRepository;
 
     /** 파일이동 */
@@ -61,8 +62,8 @@ public class FileManagementService {
         fileValidator.validateFileType(file.getType());
 
         metadataRepository.delete(file);
-        minioFileService.delete(file.getFileMetadata().getObjectName());
-        owner.setUsedQuota(owner.getUsedQuota() - file.getSize());
+        fileRepository.delete(file.getFileMetadata().getObjectName());
+        owner.minusUsedQuota(file.getSize());
     }
 
     private Metadata findMetadata(Long folderId) {
