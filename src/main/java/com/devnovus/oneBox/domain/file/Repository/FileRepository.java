@@ -3,6 +3,7 @@ package com.devnovus.oneBox.domain.file.Repository;
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
+import com.devnovus.oneBox.global.exception.StorageException;
 import io.minio.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class FileRepository {
             log.info("MinioFileService.upload / objectName: {} / ETag: {}", objectName, eTag);
             return eTag;
         } catch (Exception e) {
-            throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
+            throw new StorageException(e);
         }
     }
 

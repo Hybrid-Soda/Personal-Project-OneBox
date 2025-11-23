@@ -12,6 +12,7 @@ import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.domain.user.repository.UserRepository;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
+import com.devnovus.oneBox.global.exception.StorageException;
 import com.devnovus.oneBox.global.util.MimeTypeResolver;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
@@ -32,19 +33,22 @@ public class FileDataServiceV2 {
     private final MetadataRepository metadataRepository;
 
     /** 파일업로드 */
-    @Async("transactionExecutor")
     public void uploadFile(Metadata metadata, UploadFileDto dto) {
-        // 스토리지 업로드
-        String eTag = fileRepository.save(dto, metadata.getFileMetadata().getObjectName());
+        try {// 스토리지 업로드
+            String eTag = fileRepository.save(dto, metadata.getFileMetadata().getObjectName());
 
-        // 스토리지 업로드 오류 시 보상 트랜잭션 작동
-        if (eTag == null || eTag.isBlank()) {
+            // 스토리지 업로드 오류 시 보상 트랜잭션 작동
+            if (eTag == null || eTag.isBlank()) {
+                compensateUploadFailure(metadata);
+                throw new ApplicationException(ApplicationError.E_TAG_NOT_RETURNED);
+            }
+
+            metadata.getFileMetadata().setUploadStatus(UploadStatus.DONE);
+            metadataRepository.save(metadata);
+        } catch (StorageException e) {
             compensateUploadFailure(metadata);
-            throw new ApplicationException(ApplicationError.E_TAG_NOT_RETURNED);
+            throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
         }
-
-        metadata.getFileMetadata().setUploadStatus(UploadStatus.DONE);
-        metadataRepository.save(metadata);
     }
 
     /** 메타데이터 생성 */
@@ -71,7 +75,8 @@ public class FileDataServiceV2 {
         User user = metadata.getOwner();
 
         user.minusUsedQuota(metadata.getSize());
-        metadataRepository.delete(metadata);
+        metadata.getFileMetadata().setUploadStatus(UploadStatus.FAIL);
+        metadataRepository.save(metadata);
     }
 
     @Transactional
