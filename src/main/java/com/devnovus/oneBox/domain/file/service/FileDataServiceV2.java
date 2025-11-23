@@ -15,6 +15,7 @@ import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.global.util.MimeTypeResolver;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class FileDataServiceV2 {
     private final MetadataRepository metadataRepository;
 
     /** 파일업로드 */
+    @Async("transactionExecutor")
     public void uploadFile(Metadata metadata, UploadFileDto dto) {
         // 스토리지 업로드
         String eTag = fileRepository.save(dto, metadata.getFileMetadata().getObjectName());
