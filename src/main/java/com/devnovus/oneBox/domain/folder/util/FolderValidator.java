@@ -1,7 +1,6 @@
 package com.devnovus.oneBox.domain.folder.util;
 
-import com.devnovus.oneBox.domain.folder.dto.CreateFolderRequest;
-import com.devnovus.oneBox.domain.folder.dto.UpdateFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
@@ -18,7 +17,7 @@ import static com.devnovus.oneBox.global.constant.CommonConstant.MAX_PATH_LENGTH
 public class FolderValidator {
     private final MetadataRepository metadataRepository;
 
-    /** 파일 생성 시 검증 */
+    /** 폴더 생성 시 검증 */
     public void validateForCreate(Metadata parentFolder, String folderName) {
         validateFolderType(parentFolder.getType());
         validateDuplicatedName(folderName, parentFolder.getId());
@@ -26,14 +25,25 @@ public class FolderValidator {
         validatePathLength(parentFolder.getPath(), folderName);
     }
 
-    /** 파일 수정 시 검증 */
-    public void validateForUpdate(Metadata parentFolder, Metadata folder, UpdateFolderRequest req) {
+    /** 폴더 이동 시 검증 */
+    public void validateForMove(Metadata parentFolder, Metadata folder) {
         validateFolderType(parentFolder.getType());
         validateRootFolderUpdate(folder);
-        validateNoCircularMove(parentFolder.getId(), folder.getId());
-        validateDuplicatedName(req.getFolderName(), parentFolder.getId());
+        validateNoCircularMove(parentFolder.getPath(), folder.getPath());
         validateChildFolderLimit(parentFolder.getId());
-        validatePathLengthForUpdate(req.getUserId(), parentFolder.getPath(), folder.getPath(), folder.getName());
+        validatePathLength(
+                folder.getOwner().getId(), parentFolder.getPath(), folder.getPath(), folder.getName()
+        );
+    }
+
+    /** 폴더이름수정 시 검증 */
+    public void validateForRename(Metadata parentFolder, Metadata folder, RenameFolderRequest req) {
+        validateFolderType(parentFolder.getType());
+        validateRootFolderUpdate(folder);
+        validateDuplicatedName(req.getFolderName(), parentFolder.getId());
+        validatePathLength(
+                folder.getOwner().getId(), parentFolder.getPath(), folder.getPath(), folder.getName()
+        );
     }
 
     /** 폴더 타입 여부 검증 */
@@ -73,7 +83,7 @@ public class FolderValidator {
     }
 
     /** 경로 길이 검증 (수정/이동 시) */
-    public void validatePathLengthForUpdate(
+    public void validatePathLength(
             Long ownerId, String targetParentPath, String oldPath, String newFolderName
     ) {
         String longestChildPath = metadataRepository.findLongestChildPath(ownerId, oldPath);
@@ -86,8 +96,8 @@ public class FolderValidator {
     }
 
     /** 자식으로 이동하는 순환 방지 */
-    public void validateNoCircularMove(Long parentFolderId, Long currentFolderId) {
-        if (parentFolderId.equals(currentFolderId)) {
+    public void validateNoCircularMove(String parentPath, String currentPath) {
+        if (parentPath.contains(currentPath)) {
             throw new ApplicationException(ApplicationError.FOLDER_CANNOT_MOVE_TO_DESCENDANT);
         }
     }

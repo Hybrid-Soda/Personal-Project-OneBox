@@ -1,5 +1,6 @@
 package com.devnovus.oneBox.domain.folder.service;
 
+import com.devnovus.oneBox.domain.folder.dto.MoveFolderRequest;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
@@ -7,7 +8,7 @@ import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.domain.folder.dto.CreateFolderRequest;
 import com.devnovus.oneBox.domain.folder.dto.DeleteFolderRequest;
 import com.devnovus.oneBox.domain.metadata.dto.MetadataResponse;
-import com.devnovus.oneBox.domain.folder.dto.UpdateFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.user.repository.UserRepository;
 import com.devnovus.oneBox.domain.folder.util.FolderValidator;
@@ -48,22 +49,36 @@ public class FolderService {
                 .toList();
     }
 
-    /** 폴더수정 */
+    /** 폴더이동 */
     @Transactional
-    public void updateFolder(Long folderId, UpdateFolderRequest req) {
+    public void moveFolder(Long folderId, MoveFolderRequest req) {
         Metadata folder = findMetadata(folderId);
         Metadata parentFolder = findMetadata(req.getParentFolderId());
 
         // 검증
-        folderValidator.validateForUpdate(parentFolder, folder, req);
+        folderValidator.validateForMove(parentFolder, folder);
 
-        // 이름과 상위 폴더 수정
-        folder.setName(req.getFolderName());
+        // 상위 이동 및 경로 일괄 수정
         folder.setParentFolder(parentFolder);
+        String oldPrefix = folder.getPath();
+        String newPrefix = metadataMapper.genFolderPath(parentFolder.getPath(), folder.getName());
+        metadataRepository.updatePathByBulk(folder.getOwner().getId(), oldPrefix, newPrefix);
+    }
 
-        // 폴더와 하위 자원들의 경로 수정
-        String newPrefix = parentFolder.getPath() + folder.getName() + "/";
-        metadataRepository.updatePathByBulk(req.getUserId(), folder.getPath(), newPrefix);
+    /** 폴더이름수정 */
+    @Transactional
+    public void renameFolder(Long folderId, RenameFolderRequest req) {
+        Metadata folder = findMetadata(folderId);
+        Metadata parentFolder = folder.getParentFolder();
+
+        // 검증
+        folderValidator.validateForRename(parentFolder, folder, req);
+
+        // 폴더 이름 수정 및 경로 일괄 수정
+        folder.setName(req.getFolderName());
+        String oldPrefix = folder.getPath();
+        String newPrefix = metadataMapper.genFolderPath(parentFolder.getPath(), req.getFolderName());
+        metadataRepository.updatePathByBulk(folder.getOwner().getId(), oldPrefix, newPrefix);
     }
 
     /** 폴더삭제 */
@@ -75,7 +90,7 @@ public class FolderService {
     }
 
     private Metadata findMetadata(Long metadataId) {
-        return metadataRepository.findById(metadataId)
+        return metadataRepository.findByIdForUpdate(metadataId)
                 .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
     }
 }

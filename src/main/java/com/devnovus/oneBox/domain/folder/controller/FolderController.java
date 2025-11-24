@@ -1,10 +1,8 @@
 package com.devnovus.oneBox.domain.folder.controller;
 
 import com.devnovus.oneBox.global.response.BaseResponse;
-import com.devnovus.oneBox.domain.folder.dto.CreateFolderRequest;
-import com.devnovus.oneBox.domain.folder.dto.DeleteFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.*;
 import com.devnovus.oneBox.domain.metadata.dto.MetadataResponse;
-import com.devnovus.oneBox.domain.folder.dto.UpdateFolderRequest;
 import com.devnovus.oneBox.domain.folder.service.FolderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,14 +35,24 @@ public class FolderController {
         return ResponseEntity.ok().body(BaseResponse.of(resources));
     }
 
-    /** 폴더수정 */
-    @PutMapping("/{folderId}")
-    public ResponseEntity<BaseResponse<String>> updateFolder(
+    /** 폴더이동 */
+    @PatchMapping("/{folderId}/move")
+    public ResponseEntity<BaseResponse<String>> moveFolder(
             @PathVariable Long folderId,
-            @RequestBody UpdateFolderRequest request
+            @RequestBody MoveFolderRequest request
     ) {
-        folderService.updateFolder(folderId, request);
-        return ResponseEntity.ok().body(BaseResponse.of("폴더수정완료"));
+        folderService.moveFolder(folderId, request);
+        return ResponseEntity.ok().body(BaseResponse.of("폴더이동완료"));
+    }
+
+    /** 폴더이름수정 */
+    @PatchMapping("/{folderId}/name")
+    public ResponseEntity<BaseResponse<String>> renameFolder(
+            @PathVariable Long folderId,
+            @RequestBody RenameFolderRequest request
+    ) {
+        folderService.renameFolder(folderId, request);
+        return ResponseEntity.ok().body(BaseResponse.of("폴더이름수정완료"));
     }
 
     /** 폴더삭제 */

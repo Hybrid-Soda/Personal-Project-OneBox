@@ -11,12 +11,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
-@ExtendWith(MockitoExtension.class)
 @DisplayName("파일 검증 테스트")
+@ExtendWith(MockitoExtension.class)
 public class FileValidatorTest {
     @Mock private MetadataRepository metadataRepository;
     @InjectMocks private FileValidator fileValidator;
@@ -75,13 +76,14 @@ public class FileValidatorTest {
     @DisplayName("동일 파일명이 존재하면 예외 발생")
     void duplicateNameTest() {
         // given
-        Long parentFolderId = 1L;
-        given(metadataRepository.existsByNameAndParentFolderIdAndType(
-                "test.txt", parentFolderId, MetadataType.FILE))
+        long parentId = 1L;
+        String fileName = "test.txt";
+
+        given(metadataRepository.existsByNameAndParentFolderIdAndType(fileName, parentId, MetadataType.FILE))
                 .willReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> fileValidator.validateDuplicateName(parentFolderId, "test.txt"))
+        assertThatThrownBy(() -> fileValidator.validateDuplicateName(parentId, fileName))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.FILE_NAME_DUPLICATED.getMessage());
     }

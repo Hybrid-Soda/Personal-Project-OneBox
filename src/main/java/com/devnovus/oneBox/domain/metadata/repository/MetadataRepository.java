@@ -2,14 +2,21 @@ package com.devnovus.oneBox.domain.metadata.repository;
 
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MetadataRepository extends JpaRepository<Metadata, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Metadata m WHERE m.id = :id")
+    Optional<Metadata> findByIdForUpdate(@Param("id") Long id);
+
     // 같은 경로에 동일한 이름의 폴더 확인
     Boolean existsByNameAndParentFolderIdAndType(String name, Long parentFolderId, MetadataType type);
 
@@ -37,12 +44,12 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
     );
 
     // 최대 path 길이를 가진 자식의 path 조회
-    @Modifying
     @Query(value =
             "SELECT path FROM metadata " +
             "WHERE owner_id = :ownerId " +
             "AND path LIKE CONCAT(:oldPath, '%') " +
-            "ORDER BY LENGTH(path) DESC",
+            "ORDER BY LENGTH(path) DESC " +
+            "LIMIT 1",
             nativeQuery = true
     )
     String findLongestChildPath(@Param("ownerId") Long ownerId, @Param("oldPath") String oldPath);

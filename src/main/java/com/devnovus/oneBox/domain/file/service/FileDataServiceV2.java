@@ -16,7 +16,6 @@ import com.devnovus.oneBox.global.exception.StorageException;
 import com.devnovus.oneBox.global.util.MimeTypeResolver;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

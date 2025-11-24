@@ -14,12 +14,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
-@ExtendWith(MockitoExtension.class)
 @DisplayName("폴더 검증 테스트")
+@ExtendWith(MockitoExtension.class)
 public class FolderValidatorTest {
     @Mock private MetadataRepository metadataRepository;
     @InjectMocks private FolderValidator folderValidator;
@@ -95,11 +96,8 @@ public class FolderValidatorTest {
     @Test
     @DisplayName("순환 구조 여부 검증 테스트")
     void cyclicStructureValidationTest() {
-        // given
-        Long folderId = 1L;
-
         // when & then
-        assertThatThrownBy(() -> folderValidator.validateNoCircularMove(folderId, folderId))
+        assertThatThrownBy(() -> folderValidator.validateNoCircularMove("/parent/child/child2/", "/parent/child/"))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.FOLDER_CANNOT_MOVE_TO_DESCENDANT.getMessage());
     }

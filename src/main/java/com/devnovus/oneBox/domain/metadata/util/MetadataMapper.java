@@ -13,7 +13,7 @@ public class MetadataMapper {
     public Metadata createMetadata(
             User user, Metadata parentFolder, String folderName
     ) {
-        String path = parentFolder.getPath() + folderName + "/";
+        String path = genFolderPath(parentFolder.getPath(), folderName);
 
         return Metadata.builder()
                 .owner(user)
@@ -51,5 +51,9 @@ public class MetadataMapper {
                 .size(metadata.getSize())
                 .fileMetadata(metadata.getFileMetadata())
                 .build();
+    }
+
+    public String genFolderPath(String parentPath, String name) {
+       return parentPath + name + "/";
     }
 }

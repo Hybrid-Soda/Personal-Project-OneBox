@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;MODE=POSTGRESQL;DATABASE_TO_UPPER=false
+    username: sa
+    password: ""
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+  output.ansi.enabled: NEVER
+
+storage:
+  max-quota: 5368709120
+
+minio:
+  port: 9000
+  host: localhost
+  access-key: one_box
+  secret-key: one_box_123
+  bucket: one-box-bucket
