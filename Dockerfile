@@ -8,6 +8,3 @@ COPY build/libs/oneBox-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 # 5) 컨테이너 실행 시 실행될 명령어
 ENTRYPOINT ["java", "-jar", "/app.jar"]
-
-# ./gradlew clean build -x test
-# docker build -t devnovus/one-box:1.0 .

@@ -43,4 +43,9 @@ public class CommonConstant {
     public static final int MAX_PATH_LENGTH = 255;
     public static final int MAX_CHILD_FOLDERS = 100;
     public static final int MAX_FILE_NAME_LENGTH = 254;
+
+    public static final int THREAD_POOL_SIZE = 6;
+    public static final int QUEUE_CAPACITY  = 100;
+    public static final int KEEP_ALIVE_TIME  = 100;
+    public static final long PART_SIZE = 5 * 1024 * 1024L;
 }

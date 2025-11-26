@@ -168,6 +168,20 @@ public class FolderConcurrencyTest {
 
             assertThat(results[0] ^ results[1]).isTrue();
         }
+
+        @Test
+        @DisplayName("동시에 순환 이동 시도 시 순환 구조가 생성되지 않아야 한다 - 2")
+        void concurrent_circularMoveAttempt_2() throws Exception {
+            MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), childC.getId());
+            MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), parentA.getId());
+
+            boolean[] results = runConcurrent(
+                    () -> tryMove(parentA.getId(), requestA),
+                    () -> tryMove(parentC.getId(), requestB)
+            );
+
+            assertThat(results[0] ^ results[1]).isTrue();
+        }
     }
 
     @Nested

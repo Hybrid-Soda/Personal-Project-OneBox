@@ -33,7 +33,7 @@ public class FileRepository {
                     .build();
 
             String eTag = minioClient.putObject(args).etag();
-            log.info("MinioFileService.upload / objectName: {} / ETag: {}", objectName, eTag);
+            log.info("FileRepository.save / objectName: {} / ETag: {}", objectName, eTag);
             return eTag;
         } catch (Exception e) {
             throw new StorageException(e);

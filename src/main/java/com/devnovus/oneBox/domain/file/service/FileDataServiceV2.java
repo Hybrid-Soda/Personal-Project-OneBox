@@ -33,7 +33,8 @@ public class FileDataServiceV2 {
 
     /** 파일업로드 */
     public void uploadFile(Metadata metadata, UploadFileDto dto) {
-        try {// 스토리지 업로드
+        try {
+            // 스토리지 업로드
             String eTag = fileRepository.save(dto, metadata.getFileMetadata().getObjectName());
 
             // 스토리지 업로드 오류 시 보상 트랜잭션 작동

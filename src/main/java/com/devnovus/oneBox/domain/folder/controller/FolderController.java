@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/folders")
@@ -19,11 +20,11 @@ public class FolderController {
 
     /** 폴더생성 */
     @PostMapping
-    public ResponseEntity<BaseResponse<String>> createFolder(
+    public ResponseEntity<BaseResponse<Map<String, Long>>> createFolder(
             @Valid @RequestBody CreateFolderRequest request
     ) {
-        folderService.createFolder(request);
-        return ResponseEntity.status(201).body(BaseResponse.of("폴더생성완료"));
+        Long id = folderService.createFolder(request);
+        return ResponseEntity.status(201).body(BaseResponse.of(Map.of("id", id)));
     }
 
     /** 폴더탐색 */

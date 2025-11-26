@@ -1,5 +1,6 @@
 package com.devnovus.oneBox.domain.folder.service;
 
+import com.devnovus.oneBox.domain.file.Repository.FileRepository;
 import com.devnovus.oneBox.domain.folder.dto.MoveFolderRequest;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
@@ -24,17 +25,18 @@ import java.util.List;
 public class FolderService {
     private final MetadataMapper metadataMapper;
     private final UserRepository userRepository;
+    private final FileRepository fileRepository;
     private final FolderValidator folderValidator;
     private final MetadataRepository metadataRepository;
 
     /** 폴더생성 */
     @Transactional
-    public void createFolder(CreateFolderRequest req) {
+    public Long createFolder(CreateFolderRequest req) {
         User user = userRepository.getReferenceById(req.getUserId());
-        Metadata parentFolder = findMetadata(req.getParentFolderId());
+        Metadata parentFolder = findMetadataForUpdate(req.getParentFolderId());
 
         folderValidator.validateForCreate(parentFolder, req.getFolderName());
-        metadataRepository.save(metadataMapper.createMetadata(user, parentFolder, req.getFolderName()));
+        return metadataRepository.save(metadataMapper.createMetadata(user, parentFolder, req.getFolderName())).getId();
     }
 
     /** 폴더조회 */
@@ -52,8 +54,8 @@ public class FolderService {
     /** 폴더이동 */
     @Transactional
     public void moveFolder(Long folderId, MoveFolderRequest req) {
-        Metadata folder = findMetadata(folderId);
-        Metadata parentFolder = findMetadata(req.getParentFolderId());
+        Metadata folder = findMetadataForUpdate(folderId);
+        Metadata parentFolder = findMetadataForUpdate(req.getParentFolderId());
 
         // 검증
         folderValidator.validateForMove(parentFolder, folder);
@@ -68,7 +70,7 @@ public class FolderService {
     /** 폴더이름수정 */
     @Transactional
     public void renameFolder(Long folderId, RenameFolderRequest req) {
-        Metadata folder = findMetadata(folderId);
+        Metadata folder = findMetadataForUpdate(folderId);
         Metadata parentFolder = folder.getParentFolder();
 
         // 검증
@@ -84,12 +86,28 @@ public class FolderService {
     /** 폴더삭제 */
     @Transactional
     public void deleteFolder(Long folderId, DeleteFolderRequest req) {
-        Metadata folder = findMetadata(folderId);
+        Metadata folder = findMetadataForUpdate(folderId);
+        User user = folder.getOwner();
         folderValidator.validateFolderType(folder.getType());
+
+        // 파일 삭제
+        List<Metadata> childFiles = metadataRepository.findChildFiles(folder.getOwner().getId(), folder.getPath());
+
+        for (Metadata file: childFiles) {
+            fileRepository.delete(file.getFileMetadata().getObjectName());
+            user.minusUsedQuota(file.getSize());
+        }
+
+        // 메타데이터 삭제
         metadataRepository.deleteAllChildren(req.getUserId(), folder.getPath());
     }
 
     private Metadata findMetadata(Long metadataId) {
+        return metadataRepository.findById(metadataId)
+                .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
+    }
+
+    private Metadata findMetadataForUpdate(Long metadataId) {
         return metadataRepository.findByIdForUpdate(metadataId)
                 .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
     }

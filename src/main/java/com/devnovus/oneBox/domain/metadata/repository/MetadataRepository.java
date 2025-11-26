@@ -26,9 +26,6 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
     // 폴더 탐색
     List<Metadata> findByParentFolderId(Long parentFolderId);
 
-    // 상위 폴더 내에 있는 파일과 폴더 카운트
-    long countByParentFolderId(Long parentFolderId);
-
     @Modifying
     @Query(value =
             "UPDATE metadata " +
@@ -63,4 +60,14 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
             nativeQuery = true
     )
     void deleteAllChildren(@Param("ownerId") Long ownerId, @Param("path") String path);
+
+    // 폴더 하위 파일 검색
+    @Query(value =
+            "SELECT * FROM metadata " +
+            "WHERE owner_id = :ownerId " +
+            "AND type = 'FILE' " +
+            "AND path LIKE CONCAT(:path, '%')",
+            nativeQuery = true
+    )
+    List<Metadata> findChildFiles(@Param("ownerId") Long ownerId, @Param("path") String path);
 }
