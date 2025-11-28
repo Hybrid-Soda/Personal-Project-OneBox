@@ -1,13 +1,19 @@
 spring:
+#  datasource:
+#    driver-class-name: org.h2.Driver
+#    url: jdbc:h2:mem:testdb;MODE=POSTGRESQL;DATABASE_TO_UPPER=false
+#    username: sa
+#    password: ""
   datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb;MODE=POSTGRESQL;DATABASE_TO_UPPER=false
-    username: sa
-    password: ""
+    url: jdbc:postgresql://localhost:5432/one_box
+    driver-class-name: org.postgresql.Driver
+    username: one_box
+    password: one_box_123
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: create-drop
+#      ddl-auto: create-drop
+      ddl-auto: update
   output.ansi.enabled: NEVER
 
 storage:

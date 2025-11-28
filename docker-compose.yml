@@ -10,12 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    command:
-      - "postgres"
-      - "-c"
-      - "shared_preload_libraries=pg_stat_statements"
-      - "-c"
-      - "pg_stat_statements.track=all"
+      - ./monitoring/postgres.conf:/var/lib/postgresql/data/postgresql.conf
     deploy:
       resources:
         limits:
@@ -41,13 +36,26 @@ services:
           cpus: "1"
           memory: 2G
 
+  redis:
+    image: redis:8.2.3
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+
   onebox:
     image: devnovus/one-box:1.0
     container_name: onebox
     ports:
       - "8080:8080"
-    storage_opt:
-      size: 30G
+    volumes:
+      - ./heapdumps:/heapdumps
     deploy:
       resources:
         limits:
@@ -56,7 +64,9 @@ services:
     depends_on:
       - postgres
       - minio
+      - redis
 
 volumes:
   postgres_data:
   minio_data:
+  redis_data:

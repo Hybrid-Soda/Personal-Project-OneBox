@@ -49,7 +49,7 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
             "LIMIT 1",
             nativeQuery = true
     )
-    String findLongestChildPath(@Param("ownerId") Long ownerId, @Param("oldPath") String oldPath);
+    Optional<String> findLongestChildPath(@Param("ownerId") Long ownerId, @Param("oldPath") String oldPath);
 
     // 폴더 하위 자원 삭제
     @Modifying

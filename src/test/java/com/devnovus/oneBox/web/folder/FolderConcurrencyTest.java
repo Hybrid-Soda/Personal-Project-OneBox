@@ -2,21 +2,20 @@ package com.devnovus.oneBox.web.folder;
 
 import com.devnovus.oneBox.domain.folder.dto.MoveFolderRequest;
 import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
-import com.devnovus.oneBox.domain.folder.service.FolderService;
+import com.devnovus.oneBox.domain.folder.service.FolderServiceV1;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.domain.user.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.List;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,65 +25,102 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 @ActiveProfiles("test")
 @DisplayName("폴더 동시성 테스트")
 public class FolderConcurrencyTest {
-    @Autowired private FolderService folderService;
+    @Autowired private FolderServiceV1 folderService;
     @Autowired private UserRepository userRepository;
     @Autowired private MetadataRepository metadataRepository;
+    @Autowired private PlatformTransactionManager txManager;
 
     private User user;
+    private Metadata root;
     private Metadata parentA;
     private Metadata parentB;
     private Metadata parentC;
+    private Metadata childA;
     private Metadata childC;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        userRepository.save(user);
+        user = userRepository.save(new User());
 
-        Metadata root = Metadata.builder()
-                .owner(user).parentFolder(null).name("root").path("/").type(MetadataType.FOLDER)
-                .build();
-        parentA = Metadata.builder()
-                .owner(user).parentFolder(root).name("A").path("/A/").type(MetadataType.FOLDER)
-                .build();
-        parentB = Metadata.builder()
-                .owner(user).parentFolder(root).name("B").path("/B/").type(MetadataType.FOLDER)
-                .build();
-        parentC = Metadata.builder()
-                .owner(user).parentFolder(root).name("C").path("/C/").type(MetadataType.FOLDER)
-                .build();
-        childC = Metadata.builder()
-                .owner(user).parentFolder(parentC).name("cC").path("/C/cC/").type(MetadataType.FOLDER)
-                .build();
-        metadataRepository.saveAll(List.of(root, parentA, parentB, parentC, childC));
+        root = metadataRepository.save(
+                Metadata.builder()
+                        .owner(user).parentFolder(null).name("root").path("/").type(MetadataType.FOLDER)
+                        .build()
+        );
+        parentA = metadataRepository.save(
+                Metadata.builder()
+                        .owner(user).parentFolder(root).name("A").path("/A/").type(MetadataType.FOLDER)
+                        .build()
+        );
+        parentB = metadataRepository.save(
+                Metadata.builder()
+                        .owner(user).parentFolder(root).name("B").path("/B/").type(MetadataType.FOLDER)
+                        .build()
+        );
+        parentC = metadataRepository.save(
+                Metadata.builder()
+                        .owner(user).parentFolder(root).name("C").path("/C/").type(MetadataType.FOLDER)
+                        .build()
+        );
+        childA = metadataRepository.save(
+                Metadata.builder()
+                        .owner(user).parentFolder(parentA).name("cA").path("/A/cA/").type(MetadataType.FOLDER)
+                        .build()
+        );
+        childC = metadataRepository.save(
+                Metadata.builder()
+                        .owner(user).parentFolder(parentC).name("cC").path("/C/cC/").type(MetadataType.FOLDER)
+                        .build()
+        );
         metadataRepository.flush();
+    }
+
+    @AfterEach
+    void clear() {
+        metadataRepository.deleteAll();
+        userRepository.deleteAll();
+    }
+
+    /** 스레드별 독립 트랜잭션 강제 */
+    private Boolean executeInTx(Callable<Boolean> task) {
+        TransactionTemplate tx = new TransactionTemplate(txManager);
+        tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        return tx.execute(status -> {
+            try {
+                return task.call();
+            } catch (Exception e) {
+                return false;
+            }
+        });
     }
 
     private boolean[] runConcurrent(Callable<Boolean> taskA, Callable<Boolean> taskB) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch startLatch = new CountDownLatch(1);
 
-        Callable<Boolean> wrappedA = () -> {
-            latch.await();
+        Future<Boolean> resultA = executor.submit(() -> {
+            startLatch.await();
             return taskA.call();
-        };
-        Callable<Boolean> wrappedB = () -> {
-            latch.await();
+//            return executeInTx(taskA);
+        });
+
+        Future<Boolean> resultB = executor.submit(() -> {
+            startLatch.await();
             return taskB.call();
-        };
+//            return executeInTx(taskB);
+        });
 
-        Future<Boolean> resultA = executor.submit(wrappedA);
-        Future<Boolean> resultB = executor.submit(wrappedB);
-
-        latch.countDown();
+        startLatch.countDown();
 
         boolean successA = resultA.get();
         boolean successB = resultB.get();
-        System.out.printf("successA: %b, successB: %b", successA, successB);
-        System.out.println();
+
+        System.out.printf("successA: %b, successB: %b%n", successA, successB);
 
         executor.shutdown();
-        return new boolean[]{successA, successB};
+        executor.awaitTermination(10, TimeUnit.SECONDS);
+        return new boolean[]{ successA, successB };
     }
 
     private boolean tryMove(Long folderId, MoveFolderRequest req) {
@@ -174,6 +210,20 @@ public class FolderConcurrencyTest {
         void concurrent_circularMoveAttempt_2() throws Exception {
             MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), childC.getId());
             MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), parentA.getId());
+
+            boolean[] results = runConcurrent(
+                    () -> tryMove(parentA.getId(), requestA),
+                    () -> tryMove(parentC.getId(), requestB)
+            );
+
+            assertThat(results[0] ^ results[1]).isTrue();
+        }
+
+        @Test
+        @DisplayName("동시에 순환 이동 시도 시 순환 구조가 생성되지 않아야 한다 - 3")
+        void concurrent_circularMoveAttempt_3() throws Exception {
+            MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), childC.getId());
+            MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), childA.getId());
 
             boolean[] results = runConcurrent(
                     () -> tryMove(parentA.getId(), requestA),

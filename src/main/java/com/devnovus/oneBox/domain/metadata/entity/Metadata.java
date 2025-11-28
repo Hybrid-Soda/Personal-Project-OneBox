@@ -10,7 +10,13 @@ import lombok.Getter;
 
 @Entity
 @Getter
-@Table(name = "metadata", uniqueConstraints = @UniqueConstraint(columnNames = {"owner_id", "parent_folder_id", "name"}))
+@Table(
+        name = "metadata",
+        uniqueConstraints = @UniqueConstraint(
+                name = "unique_constraint_for_update",
+                columnNames = {"owner_id", "parent_folder_id", "name"}
+        )
+)
 public class Metadata extends BaseEntity {
     // 소유자
     @JoinColumn(name = "owner_id")

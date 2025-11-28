@@ -20,6 +20,11 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: one_box
     password: one_box_123
+    hikari:
+      maximum-pool-size: 30          # 최대 커넥션 수: 30개
+      connection-timeout: 30000      # 커넥션 대기 시간: 30초
+      max-lifetime: 60000            # 커넥션의 최대 수명: 60초
+      leak-detection-threshold: 2000 # 커넥션 반환 시간 측정해 누수 로그 발생: 2초
   jpa:
     open-in-view: false
     hibernate:
@@ -40,6 +45,11 @@ minio:
   secret-key: one_box_123
   bucket: one-box-bucket
 
+redis:
+  port: 6379
+#  host: localhost
+  host: redis
+
 management:
   endpoints.web.exposure.include: prometheus
   metrics:
@@ -51,4 +61,6 @@ logging:
     org:
       springframework: INFO
 #      springframework: TRACE
+      jdbc.connection : INFO
+      com.zaxxer.hikari.HikariDataSource: INFO
       hibernate: WARN

@@ -22,7 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class FolderService {
+public class FolderServiceV1 {
     private final MetadataMapper metadataMapper;
     private final UserRepository userRepository;
     private final FileRepository fileRepository;

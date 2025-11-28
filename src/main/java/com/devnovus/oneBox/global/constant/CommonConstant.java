@@ -2,6 +2,7 @@ package com.devnovus.oneBox.global.constant;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class CommonConstant {
@@ -43,9 +44,4 @@ public class CommonConstant {
     public static final int MAX_PATH_LENGTH = 255;
     public static final int MAX_CHILD_FOLDERS = 100;
     public static final int MAX_FILE_NAME_LENGTH = 254;
-
-    public static final int THREAD_POOL_SIZE = 6;
-    public static final int QUEUE_CAPACITY  = 100;
-    public static final int KEEP_ALIVE_TIME  = 100;
-    public static final long PART_SIZE = 5 * 1024 * 1024L;
 }

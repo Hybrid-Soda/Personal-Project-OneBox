@@ -1,9 +1,13 @@
 package com.devnovus.oneBox.domain.folder.controller;
 
-import com.devnovus.oneBox.global.response.BaseResponse;
-import com.devnovus.oneBox.domain.folder.dto.*;
+import com.devnovus.oneBox.domain.folder.dto.CreateFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.DeleteFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.MoveFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
+import com.devnovus.oneBox.domain.folder.service.FolderServiceV2;
+import com.devnovus.oneBox.domain.folder.service.FolderServiceV3;
 import com.devnovus.oneBox.domain.metadata.dto.MetadataResponse;
-import com.devnovus.oneBox.domain.folder.service.FolderService;
+import com.devnovus.oneBox.global.response.BaseResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/folders")
+@RequestMapping("/folders/v3")
 @RequiredArgsConstructor
-public class FolderController {
-    private final FolderService folderService;
+public class FolderControllerV3 {
+    private final FolderServiceV3 folderService;
 
     /** 폴더생성 */
     @PostMapping

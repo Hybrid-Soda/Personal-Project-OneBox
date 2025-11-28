@@ -45,11 +45,14 @@ public class MetadataMapper {
     // 메타데이터 조회 객체 생성
     public MetadataResponse createMetadataResponse(Metadata metadata) {
         return MetadataResponse.builder()
+                .id(metadata.getId())
                 .name(metadata.getName())
                 .path(metadata.getPath())
                 .type(metadata.getType())
                 .size(metadata.getSize())
                 .fileMetadata(metadata.getFileMetadata())
+                .createdAt(metadata.getCreatedAt())
+                .updatedAt(metadata.getUpdatedAt())
                 .build();
     }
 

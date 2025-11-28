@@ -9,6 +9,8 @@ import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 import static com.devnovus.oneBox.global.constant.CommonConstant.MAX_CHILD_FOLDERS;
 import static com.devnovus.oneBox.global.constant.CommonConstant.MAX_PATH_LENGTH;
 
@@ -86,12 +88,15 @@ public class FolderValidator {
     public void validatePathLength(
             Long ownerId, String targetParentPath, String oldPath, String newFolderName
     ) {
-        String longestChildPath = metadataRepository.findLongestChildPath(ownerId, oldPath);
-        int relativeLength = longestChildPath.substring(oldPath.length()).length();
-        int length = calculateNewPathLength(targetParentPath, newFolderName) + relativeLength;
+        Optional<String> longestChildPath = metadataRepository.findLongestChildPath(ownerId, oldPath);
 
-        if (length > MAX_PATH_LENGTH) {
-            throw new ApplicationException(ApplicationError.FOLDER_PATH_LENGTH_EXCEEDED);
+        if (longestChildPath.isPresent()) {
+            int relativeLength = longestChildPath.get().substring(oldPath.length()).length();
+            int length = calculateNewPathLength(targetParentPath, newFolderName) + relativeLength;
+
+            if (length > MAX_PATH_LENGTH) {
+                throw new ApplicationException(ApplicationError.FOLDER_PATH_LENGTH_EXCEEDED);
+            }
         }
     }
 
