@@ -1,7 +1,7 @@
 package com.devnovus.oneBox.domain.file.Repository;
 
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
-import com.devnovus.oneBox.global.aop.MeasureExecutionTime;
+import com.devnovus.oneBox.global.aop.time.ExecutionTime;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.global.exception.StorageException;
@@ -22,7 +22,7 @@ public class FileRepository {
 
     private final MinioClient minioClient;
 
-    @MeasureExecutionTime
+    @ExecutionTime
     public String save(UploadFileDto dto, String objectName) {
         try (InputStream inputStream = dto.getInputStream()) {
             PutObjectArgs args = PutObjectArgs.builder()
@@ -40,7 +40,7 @@ public class FileRepository {
         }
     }
 
-    @MeasureExecutionTime
+    @ExecutionTime
     public InputStream download(String objectName) {
         try {
             GetObjectArgs args = GetObjectArgs.builder()
@@ -56,7 +56,7 @@ public class FileRepository {
         }
     }
 
-    @MeasureExecutionTime
+    @ExecutionTime
     public void delete(String objectName) {
         try {
             RemoveObjectArgs args = RemoveObjectArgs.builder()

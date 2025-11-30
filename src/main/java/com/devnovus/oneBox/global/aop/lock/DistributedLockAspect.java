@@ -1,5 +1,8 @@
-package com.devnovus.oneBox.global.lock;
+package com.devnovus.oneBox.global.aop.lock;
 
+import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
+import com.devnovus.oneBox.global.exception.ApplicationError;
+import com.devnovus.oneBox.global.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -16,54 +19,55 @@ import java.lang.reflect.Method;
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class DistributedLockAop {
-
+public class DistributedLockAspect {
     private final RedissonClient redissonClient;
-    private final AopForTransaction aopForTransaction;
+    private final MetadataRepository metadataRepository;
+    private final TransactionalExecutor transactionalExecutor;
 
     @Around("@annotation(DistributedLock)")
     public Object lock(final ProceedingJoinPoint joinPoint) throws Throwable {
-
+        // 메서드 및 어노테이션 정보 획득
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
-
-        // 어노테이션 정보 획득
         DistributedLock distributedLock = method.getAnnotation(DistributedLock.class);
 
-        // 스프링 SPEL 혹은 사용자 지정 파서로 동적 키 생성
-        String key = "LOCK:" + CustomSpringELParser.getDynamicValue(
+        // key 생성
+        Long folderId = CustomSpringELParser.getDynamicValue(
                 signature.getParameterNames(),
                 joinPoint.getArgs(),
                 distributedLock.key()
         );
+        Long ownerId = metadataRepository.findOwnerIdById(folderId)
+                .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
+        String key = "LOCK:" + ownerId;
 
-        // Redisson을 통해 RLock 객체 획득
+        // RLock 객체 획득
         RLock rLock = redissonClient.getLock(key);
 
+        // Lock 획득 시도
         try {
-            log.info(String.valueOf(distributedLock));
-            // 락 획득 시도: waitTime 동안 대기하고, leaseTime 만큼 락을 보유
             boolean available = rLock.tryLock(distributedLock.waitTime(), distributedLock.timeUnit());
 
-            // // 락 획득 실패 시 false 리턴
             if (!available) {
-                log.info("FAIL TO ACQUIRE LOCK: {} {}", method.getName(), key);
+                log.info("[Redisson] FAIL TO ACQUIRE LOCK: {} {}", method.getName(), key);
                 return false;
             }
 
-            // 락을 획득한 상태에서 실제 메소드 실행
-            log.info("SUCCESS TO ACQUIRE LOCK: {} {}", method.getName(), key);
-            return aopForTransaction.proceed(joinPoint);
+            log.info("[Redisson] SUCCESS TO ACQUIRE LOCK: {} {}", method.getName(), key);
+            return transactionalExecutor.proceed(joinPoint);
+
         } catch (InterruptedException e) {
-            // 스레드 인터럽트 시 예외 재던짐
             throw new InterruptedException();
+
         } finally {
+
+            // 트랜잭션 종료 시 Lock 해제
             try {
                 rLock.unlock();
-                log.info("SUCCESS TO DO UNLOCK: {} {}", method.getName(), key);
+                log.info("[Redisson] SUCCESS TO DO UNLOCK: {} {}", method.getName(), key);
+
             } catch (IllegalMonitorStateException e) {
-                // 현재 스레드가 락 소유자가 아니거나 이미 해제된 상태에서 unlock 호출 시 발생 가능
-                log.info("FAIL TO DO UNLOCK: {} {}", method.getName(), key);
+                log.info("[Redisson] ALREADY UNLOCKED: {} {}", method.getName(), key);
             }
         }
     }

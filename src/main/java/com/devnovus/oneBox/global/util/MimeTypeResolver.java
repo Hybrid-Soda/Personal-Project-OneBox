@@ -4,6 +4,8 @@ import static com.devnovus.oneBox.global.constant.CommonConstant.DEFAULT_MIME_TY
 import static com.devnovus.oneBox.global.constant.CommonConstant.MIME_TYPES;
 
 public class MimeTypeResolver {
+    private MimeTypeResolver() {}
+
     public static String getMimeType(String ext) {
         if (ext == null || ext.isEmpty()) {
             return DEFAULT_MIME_TYPE;

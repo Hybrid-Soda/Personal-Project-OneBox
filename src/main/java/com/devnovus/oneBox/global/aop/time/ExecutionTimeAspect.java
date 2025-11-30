@@ -1,4 +1,4 @@
-package com.devnovus.oneBox.global.aop;
+package com.devnovus.oneBox.global.aop.time;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 public class ExecutionTimeAspect {
     @Around("@annotation(MeasureExecutionTime)")
     public Object measureExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
-
         long start = System.currentTimeMillis();
 
         try {

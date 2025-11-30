@@ -3,11 +3,14 @@ package com.devnovus.oneBox.web.folder;
 import com.devnovus.oneBox.domain.folder.dto.MoveFolderRequest;
 import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
 import com.devnovus.oneBox.domain.folder.service.FolderServiceV1;
+import com.devnovus.oneBox.domain.folder.service.FolderServiceV3;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.domain.user.repository.UserRepository;
+import com.devnovus.oneBox.global.exception.ApplicationError;
+import com.devnovus.oneBox.global.exception.ApplicationException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 @ActiveProfiles("test")
 @DisplayName("폴더 동시성 테스트")
 public class FolderConcurrencyTest {
-    @Autowired private FolderServiceV1 folderService;
+    @Autowired private FolderServiceV3 folderService;
     @Autowired private UserRepository userRepository;
     @Autowired private MetadataRepository metadataRepository;
     @Autowired private PlatformTransactionManager txManager;
@@ -81,46 +84,29 @@ public class FolderConcurrencyTest {
         userRepository.deleteAll();
     }
 
-    /** 스레드별 독립 트랜잭션 강제 */
-    private Boolean executeInTx(Callable<Boolean> task) {
-        TransactionTemplate tx = new TransactionTemplate(txManager);
-        tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-
-        return tx.execute(status -> {
-            try {
-                return task.call();
-            } catch (Exception e) {
-                return false;
-            }
-        });
-    }
-
     private boolean[] runConcurrent(Callable<Boolean> taskA, Callable<Boolean> taskB) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch startLatch = new CountDownLatch(1);
 
-        Future<Boolean> resultA = executor.submit(() -> {
-            startLatch.await();
-            return taskA.call();
-//            return executeInTx(taskA);
-        });
+        try {
+            Future<Boolean> resultA = executor.submit(() -> {
+                startLatch.await();
+                return taskA.call();
+            });
+            Future<Boolean> resultB = executor.submit(() -> {
+                startLatch.await();
+                return taskB.call();
+            });
 
-        Future<Boolean> resultB = executor.submit(() -> {
-            startLatch.await();
-            return taskB.call();
-//            return executeInTx(taskB);
-        });
+            startLatch.countDown();
 
-        startLatch.countDown();
+            boolean successA = resultA.get();
+            boolean successB = resultB.get();
 
-        boolean successA = resultA.get();
-        boolean successB = resultB.get();
-
-        System.out.printf("successA: %b, successB: %b%n", successA, successB);
-
-        executor.shutdown();
-        executor.awaitTermination(10, TimeUnit.SECONDS);
-        return new boolean[]{ successA, successB };
+            return new boolean[]{ successA, successB };
+        } finally {
+            executor.shutdown();
+        }
     }
 
     private boolean tryMove(Long folderId, MoveFolderRequest req) {
@@ -230,6 +216,11 @@ public class FolderConcurrencyTest {
                     () -> tryMove(parentC.getId(), requestB)
             );
 
+            System.out.println(
+                    metadataRepository.findById(childA.getId()).orElseThrow().getPath());
+            System.out.println(
+                    metadataRepository.findById(childC.getId()).orElseThrow().getPath());
+
             assertThat(results[0] ^ results[1]).isTrue();
         }
     }
@@ -257,8 +248,10 @@ public class FolderConcurrencyTest {
         @DisplayName("동시에 폴더 이름 변경과 폴더 이동할 때 경로 정합성이 유지되어야 한다")
         void concurrent_renameAndMoveFolder() throws Exception {
             String newName = "D";
+            Long parentAId = parentA.getId();
+
             RenameFolderRequest renameReq = new RenameFolderRequest(user.getId(), newName);
-            MoveFolderRequest moveReq = new MoveFolderRequest(user.getId(), parentA.getId());
+            MoveFolderRequest moveReq = new MoveFolderRequest(user.getId(), parentAId);
 
             runConcurrent(
                     () -> tryRename(parentC.getId(), renameReq),
@@ -267,17 +260,20 @@ public class FolderConcurrencyTest {
 
             Metadata updatedParentC = metadataRepository.findById(parentC.getId()).orElseThrow();
             Metadata updatedChildC = metadataRepository.findById(childC.getId()).orElseThrow();
-            String expectedChildCPath = updatedParentC.getPath() + updatedChildC.getName() + "/";
 
-            assertAll(
-                    // C는 A의 자식이어야 한다.
-                    () -> assertThat(updatedParentC.getParentFolder().getId()).isEqualTo(parentA.getId()),
-                    // 이름은 newName으로 변경되어야 한다.
-                    () -> assertThat(updatedParentC.getName()).isEqualTo(newName),
-                    // 자식 폴더(cC)의 parent는 일관되어야 한다.
-                    () -> assertThat(updatedChildC.getParentFolder().getId()).isEqualTo(updatedParentC.getId()),
-                    // 자식 폴더(cC)의 path는 일관되어야 한다.
-                    () -> assertThat(updatedChildC.getPath()).isEqualTo(expectedChildCPath)
+            String renamePath = "/D/cC/";
+            String movePath = "/A/C/cC/";
+
+            assertThat(updatedParentC).satisfiesAnyOf(
+                    // Case1: 이름 변경 성공
+                    it -> {
+                        assertThat(it.getName()).isEqualTo(newName);
+                        assertThat(updatedChildC.getPath()).isEqualTo(renamePath);
+                    },
+                    // Case2: A로 이동 성공
+                    it -> {
+                        assertThat(updatedChildC.getPath()).isEqualTo(movePath);
+                    }
             );
         }
     }

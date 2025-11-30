@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/one_box
+    username: one_box
+    password: one_box_123
+
+minio:
+  host: minio
+  port: 9000
+  access-key: one_box
+  secret-key: one_box_123
+  bucket: one-box-bucket
+
+redis:
+  host: redis
+  port: 6379

@@ -15,40 +15,21 @@ spring:
       max-file-size: 1GB
       max-request-size: 2GB
   datasource:
-#    url: jdbc:postgresql://localhost:5432/one_box
-    url: jdbc:postgresql://postgres:5432/one_box
     driver-class-name: org.postgresql.Driver
-    username: one_box
-    password: one_box_123
     hikari:
-      maximum-pool-size: 30          # 최대 커넥션 수: 30개
-      connection-timeout: 30000      # 커넥션 대기 시간: 30초
-      max-lifetime: 60000            # 커넥션의 최대 수명: 60초
-      leak-detection-threshold: 2000 # 커넥션 반환 시간 측정해 누수 로그 발생: 2초
+      maximum-pool-size: 30           # 최대 커넥션 수: 30개
+      minimum-idle: 30                # 최소 커넥션 수: 30개
+      connection-timeout: 30000       # 커넥션 획득 대기 시간: 30초
+      max-lifetime: 1800000           # 커넥션의 최대 수명: 30분
+      keepalive-time: 60000           # Idle 커넥션에 대한 TCP Keepalive 주기: 1분
+      leak-detection-threshold: 2000  # 커넥션 반환 시간 측정해 누수 로그 발생: 2초
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: update
-#    show-sql: true
-  output:
-    ansi:
-      enabled: ALWAYS
 
 storage:
   max-quota: 5368709120 # 5GB
-
-minio:
-  port: 9000
-#  host: localhost
-  host: minio
-  access-key: one_box
-  secret-key: one_box_123
-  bucket: one-box-bucket
-
-redis:
-  port: 6379
-#  host: localhost
-  host: redis
 
 management:
   endpoints.web.exposure.include: prometheus
@@ -56,11 +37,8 @@ management:
     export.prometheus.enabled: true
     tags.app: oneBox
 
-logging:
-  level:
-    org:
-      springframework: INFO
-#      springframework: TRACE
-      jdbc.connection : INFO
-      com.zaxxer.hikari.HikariDataSource: INFO
-      hibernate: WARN
+logging.level.org:
+  hibernate: WARN
+  springframework: INFO
+  jdbc.connection : INFO
+  com.zaxxer.hikari.HikariDataSource: INFO

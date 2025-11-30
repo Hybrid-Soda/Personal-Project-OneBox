@@ -17,6 +17,10 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
     @Query("SELECT m FROM Metadata m WHERE m.id = :id")
     Optional<Metadata> findByIdForUpdate(@Param("id") Long id);
 
+    // 소유자 식별키 조회
+    @Query("SELECT m.owner.id FROM Metadata m WHERE m.id = :id")
+    Optional<Long> findOwnerIdById(Long id);
+
     // 같은 경로에 동일한 이름의 폴더 확인
     Boolean existsByNameAndParentFolderIdAndType(String name, Long parentFolderId, MetadataType type);
 

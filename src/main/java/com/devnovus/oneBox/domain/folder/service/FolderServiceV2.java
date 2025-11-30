@@ -12,7 +12,7 @@ import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.metadata.util.MetadataMapper;
 import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.domain.user.repository.UserRepository;
-import com.devnovus.oneBox.global.lock.DistributedLock;
+import com.devnovus.oneBox.global.aop.lock.DistributedLock;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +33,7 @@ public class FolderServiceV2 {
     private final MetadataRepository metadataRepository;
 
     /** 폴더생성 */
-    @DistributedLock(key = "#req.userId")
-    @Transactional
+    @DistributedLock(key = "#req.parentFolderId")
     public Long createFolder(CreateFolderRequest req) {
         User user = userRepository.getReferenceById(req.getUserId());
         Metadata parentFolder = findMetadata(req.getParentFolderId());
@@ -44,7 +43,6 @@ public class FolderServiceV2 {
     }
 
     /** 폴더조회 */
-    @DistributedLock(key = "#req.userId")
     @Transactional(readOnly = true)
     public List<MetadataResponse> getListInFolder(Long folderId) {
         Metadata folder = findMetadata(folderId);
@@ -57,8 +55,7 @@ public class FolderServiceV2 {
     }
 
     /** 폴더이동 */
-    @DistributedLock(key = "#req.userId")
-    @Transactional
+    @DistributedLock(key = "#folderId")
     public void moveFolder(Long folderId, MoveFolderRequest req) {
         Metadata folder = findMetadata(folderId);
         Metadata parentFolder = findMetadata(req.getParentFolderId());
@@ -74,8 +71,7 @@ public class FolderServiceV2 {
     }
 
     /** 폴더이름수정 */
-    @DistributedLock(key = "#req.userId")
-    @Transactional
+    @DistributedLock(key = "#folderId")
     public void renameFolder(Long folderId, RenameFolderRequest req) {
         Metadata folder = findMetadata(folderId);
         Metadata parentFolder = folder.getParentFolder();
@@ -91,8 +87,7 @@ public class FolderServiceV2 {
     }
 
     /** 폴더삭제 */
-    @DistributedLock(key = "#req.userId")
-    @Transactional
+    @DistributedLock(key = "#folderId")
     public void deleteFolder(Long folderId, DeleteFolderRequest req) {
         Metadata folder = findMetadata(folderId);
         User user = folder.getOwner();

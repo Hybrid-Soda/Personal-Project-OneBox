@@ -25,3 +25,7 @@ minio:
   access-key: one_box
   secret-key: one_box_123
   bucket: one-box-bucket
+
+redis:
+  port: 6379
+  host: localhost
