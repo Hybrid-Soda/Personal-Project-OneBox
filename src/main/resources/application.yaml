@@ -17,11 +17,11 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 30           # 최대 커넥션 수: 30개
-      minimum-idle: 30                # 최소 커넥션 수: 30개
-      connection-timeout: 30000       # 커넥션 획득 대기 시간: 30초
-      max-lifetime: 1800000           # 커넥션의 최대 수명: 30분
-      keepalive-time: 60000           # Idle 커넥션에 대한 TCP Keepalive 주기: 1분
+#      maximum-pool-size: 30           # 최대 커넥션 수: 30개
+#      minimum-idle: 30                # 최소 커넥션 수: 30개
+#      connection-timeout: 30000       # 커넥션 획득 대기 시간: 30초
+#      max-lifetime: 1800000           # 커넥션의 최대 수명: 30분
+#      keepalive-time: 60000           # Idle 커넥션에 대한 TCP Keepalive 주기: 1분
       leak-detection-threshold: 2000  # 커넥션 반환 시간 측정해 누수 로그 발생: 2초
   jpa:
     open-in-view: false

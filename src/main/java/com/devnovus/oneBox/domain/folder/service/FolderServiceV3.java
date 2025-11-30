@@ -36,7 +36,8 @@ public class FolderServiceV3 {
     /** 폴더생성 */
     @Transactional
     public Long createFolder(CreateFolderRequest req) {
-        advisoryLockRepository.acquireTxLock(req.getUserId());
+        Long ownerId = findOwnerId(req.getParentFolderId());
+        advisoryLockRepository.acquireTxLock(ownerId);
 
         User user = userRepository.getReferenceById(req.getUserId());
         Metadata parentFolder = findMetadata(req.getParentFolderId());
@@ -49,7 +50,6 @@ public class FolderServiceV3 {
     @Transactional(readOnly = true)
     public List<MetadataResponse> getListInFolder(Long folderId) {
         Metadata folder = findMetadata(folderId);
-        advisoryLockRepository.acquireTxLock(folder.getOwner().getId());
 
         folderValidator.validateFolderType(folder.getType());
         return metadataRepository.findByParentFolderId(folderId)
@@ -61,9 +61,10 @@ public class FolderServiceV3 {
     /** 폴더이동 */
     @Transactional
     public void moveFolder(Long folderId, MoveFolderRequest req) {
-        Metadata folder = findMetadata(folderId);
-        advisoryLockRepository.acquireTxLock(folder.getOwner().getId());
+        Long ownerId = findOwnerId(folderId);
+        advisoryLockRepository.acquireTxLock(ownerId);
 
+        Metadata folder = findMetadata(folderId);
         Metadata parentFolder = findMetadata(req.getParentFolderId());
 
         // 검증
@@ -79,9 +80,10 @@ public class FolderServiceV3 {
     /** 폴더이름수정 */
     @Transactional
     public void renameFolder(Long folderId, RenameFolderRequest req) {
-        Metadata folder = findMetadata(folderId);
-        advisoryLockRepository.acquireTxLock(folder.getOwner().getId());
+        Long ownerId = findOwnerId(folderId);
+        advisoryLockRepository.acquireTxLock(ownerId);
 
+        Metadata folder = findMetadata(folderId);
         Metadata parentFolder = folder.getParentFolder();
 
         // 검증
@@ -97,9 +99,10 @@ public class FolderServiceV3 {
     /** 폴더삭제 */
     @Transactional
     public void deleteFolder(Long folderId, DeleteFolderRequest req) {
-        Metadata folder = findMetadata(folderId);
-        advisoryLockRepository.acquireTxLock(folder.getOwner().getId());
+        Long ownerId = findOwnerId(folderId);
+        advisoryLockRepository.acquireTxLock(ownerId);
 
+        Metadata folder = findMetadata(folderId);
         User user = folder.getOwner();
         folderValidator.validateFolderType(folder.getType());
 
@@ -118,5 +121,10 @@ public class FolderServiceV3 {
     private Metadata findMetadata(Long metadataId) {
         return metadataRepository.findById(metadataId)
                 .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
+    }
+
+    private Long findOwnerId(Long metadataId) {
+        return metadataRepository.findOwnerIdById(metadataId)
+                .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
     }
 }
