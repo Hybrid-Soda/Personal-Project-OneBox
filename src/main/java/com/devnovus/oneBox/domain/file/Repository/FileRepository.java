@@ -6,12 +6,14 @@ import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.global.exception.StorageException;
 import io.minio.*;
+import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -49,7 +51,7 @@ public class FileRepository {
                     .build();
 
             InputStream stream = minioClient.getObject(args);
-            log.info("MinioFileService.download / objectName: {}", objectName);
+            log.info("FileRepository.download / objectName: {}", objectName);
             return stream;
         } catch (Exception e) {
             throw new ApplicationException(ApplicationError.FILE_NOT_DOWNLOADED);
@@ -65,9 +67,50 @@ public class FileRepository {
                     .build();
 
             minioClient.removeObject(args);
-            log.info("MinioFileService.delete / objectName: {}", objectName);
+            log.info("FileRepository.delete / objectName: {}", objectName);
         } catch (Exception e) {
             throw new ApplicationException(ApplicationError.FILE_NOT_DELETED);
+        }
+    }
+
+    @ExecutionTime
+    public String createPreSignedUploadUrl(String objectName, String contentType) {
+        try {
+            GetPresignedObjectUrlArgs args = GetPresignedObjectUrlArgs.builder()
+                    .method(Method.PUT)
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .extraHeaders(Map.of("Content-Type", contentType))
+                    .expiry(600)
+                    .build();
+
+            String uploadUrl = minioClient.getPresignedObjectUrl(args);
+            log.info("FileRepository.createPreSignedUploadUrl / objectName: {}", objectName);
+            return uploadUrl;
+        } catch (Exception e) {
+            throw new StorageException(e);
+        }
+    }
+
+    @ExecutionTime
+    public void verifyObjectExists(String objectName, long expectedSize) {
+        try {
+            StatObjectArgs args = StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .build();
+
+            StatObjectResponse stat = minioClient.statObject(args);
+
+            if (stat.size() != expectedSize) {
+                throw new StorageException(new IllegalStateException("uploaded size mismatch"));
+            }
+
+            log.info("FileRepository.verifyObjectExists / objectName: {} / size: {}", objectName, stat.size());
+        } catch (StorageException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageException(e);
         }
     }
 }
