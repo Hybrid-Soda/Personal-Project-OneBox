@@ -53,7 +53,7 @@ public class FileUploadManager {
     /** 스토리지 업로드 */
     public String uploadToStorage(UploadFileDto dto, Long fileId) {
         Metadata file = findMetadata(fileId);
-        return fileRepository.save(dto, file.getFileMetadata().getObjectName());
+        return fileRepository.putObject(dto, file.getFileMetadata().getObjectName());
     }
 
     /** 파일업로드 성공시 */

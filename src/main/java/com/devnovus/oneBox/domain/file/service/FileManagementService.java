@@ -62,7 +62,7 @@ public class FileManagementService {
         fileValidator.validateFileType(file.getType());
 
         metadataRepository.delete(file);
-        fileRepository.delete(file.getFileMetadata().getObjectName());
+        fileRepository.removeObject(file.getFileMetadata().getObjectName());
         owner.minusUsedQuota(file.getSize());
     }
 

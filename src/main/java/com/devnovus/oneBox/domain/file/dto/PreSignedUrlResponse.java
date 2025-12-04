@@ -9,7 +9,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PreSignedUrlResponse {
     private Long metadataId;
-    private String objectName;
     private String uploadUrl;
-    private String contentType;
 }

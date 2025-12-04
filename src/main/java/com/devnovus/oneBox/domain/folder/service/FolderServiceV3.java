@@ -110,7 +110,7 @@ public class FolderServiceV3 {
         List<Metadata> childFiles = metadataRepository.findChildFiles(folder.getOwner().getId(), folder.getPath());
 
         for (Metadata file: childFiles) {
-            fileRepository.delete(file.getFileMetadata().getObjectName());
+            fileRepository.removeObject(file.getFileMetadata().getObjectName());
             user.minusUsedQuota(file.getSize());
         }
 

@@ -25,11 +25,11 @@ public class FileDataControllerV3 {
 
     /** pre-signed 업로드 완료 처리 */
     @PostMapping("/pre-signed/{fileId}/complete")
-    public ResponseEntity<BaseResponse<String>> completePreSignedUpload(
+    public ResponseEntity<BaseResponse<String>> completeUpload(
             @PathVariable Long fileId,
             @RequestParam String eTag
     ) {
-        fileService.completePreSignedUpload(fileId, eTag);
+        fileService.completeUpload(fileId, eTag);
         return ResponseEntity.ok(BaseResponse.of("업로드 완료"));
     }
 }

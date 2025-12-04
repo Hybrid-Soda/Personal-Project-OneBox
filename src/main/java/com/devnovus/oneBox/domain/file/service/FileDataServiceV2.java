@@ -46,7 +46,7 @@ public class FileDataServiceV2 {
         Metadata metadata = findMetadata(fileId);
         fileValidator.validateFileType(metadata.getType());
 
-        InputStream stream = fileRepository.download(metadata.getFileMetadata().getObjectName());
+        InputStream stream = fileRepository.getObject(metadata.getFileMetadata().getObjectName());
 
         return new DownloadFileDto(
                 metadata.getSize(), metadata.getName(), metadata.getFileMetadata().getMimeType(), stream

@@ -47,7 +47,7 @@ public class FileDataServiceV1 {
         user.plusUsedQuota(dto.getFileSize());
 
         // 스토리지 업로드
-        String eTag = fileRepository.save(dto, objectName);
+        String eTag = fileRepository.putObject(dto, objectName);
 
         // 스토리지 업로드 오류 시 보상 트랜잭션 작동
         if (eTag == null || eTag.isBlank()) {
@@ -64,7 +64,7 @@ public class FileDataServiceV1 {
         Metadata metadata = findMetadata(fileId);
         fileValidator.validateFileType(metadata.getType());
 
-        InputStream stream = fileRepository.download(metadata.getFileMetadata().getObjectName());
+        InputStream stream = fileRepository.getObject(metadata.getFileMetadata().getObjectName());
 
         return new DownloadFileDto(metadata.getSize(), metadata.getName(), metadata.getFileMetadata().getMimeType(), stream);
     }

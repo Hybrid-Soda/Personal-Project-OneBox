@@ -25,7 +25,7 @@ public class FileRepository {
     private final MinioClient minioClient;
 
     @ExecutionTime
-    public String save(UploadFileDto dto, String objectName) {
+    public String putObject(UploadFileDto dto, String objectName) {
         try (InputStream inputStream = dto.getInputStream()) {
             PutObjectArgs args = PutObjectArgs.builder()
                     .bucket(bucketName)
@@ -35,7 +35,7 @@ public class FileRepository {
                     .build();
 
             String eTag = minioClient.putObject(args).etag();
-            log.info("FileRepository.save / objectName: {} / ETag: {}", objectName, eTag);
+            log.info("FileRepository.putObject / objectName: {} / ETag: {}", objectName, eTag);
             return eTag;
         } catch (Exception e) {
             throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
@@ -43,7 +43,7 @@ public class FileRepository {
     }
 
     @ExecutionTime
-    public InputStream download(String objectName) {
+    public InputStream getObject(String objectName) {
         try {
             GetObjectArgs args = GetObjectArgs.builder()
                     .bucket(bucketName)
@@ -51,7 +51,7 @@ public class FileRepository {
                     .build();
 
             InputStream stream = minioClient.getObject(args);
-            log.info("FileRepository.download / objectName: {}", objectName);
+            log.info("FileRepository.getObject / objectName: {}", objectName);
             return stream;
         } catch (Exception e) {
             throw new ApplicationException(ApplicationError.FILE_NOT_DOWNLOADED);
@@ -59,7 +59,7 @@ public class FileRepository {
     }
 
     @ExecutionTime
-    public void delete(String objectName) {
+    public void removeObject(String objectName) {
         try {
             RemoveObjectArgs args = RemoveObjectArgs.builder()
                     .bucket(bucketName)
@@ -67,14 +67,14 @@ public class FileRepository {
                     .build();
 
             minioClient.removeObject(args);
-            log.info("FileRepository.delete / objectName: {}", objectName);
+            log.info("FileRepository.removeObject / objectName: {}", objectName);
         } catch (Exception e) {
             throw new ApplicationException(ApplicationError.FILE_NOT_DELETED);
         }
     }
 
     @ExecutionTime
-    public String createPreSignedUploadUrl(String objectName, String contentType) {
+    public String getPreSignedObjectUrl(String objectName, String contentType) {
         try {
             GetPresignedObjectUrlArgs args = GetPresignedObjectUrlArgs.builder()
                     .method(Method.PUT)
@@ -85,7 +85,7 @@ public class FileRepository {
                     .build();
 
             String uploadUrl = minioClient.getPresignedObjectUrl(args);
-            log.info("FileRepository.createPreSignedUploadUrl / objectName: {}", objectName);
+            log.info("FileRepository.getPreSignedObjectUrl / objectName: {}", objectName);
             return uploadUrl;
         } catch (Exception e) {
             throw new StorageException(e);
@@ -93,7 +93,7 @@ public class FileRepository {
     }
 
     @ExecutionTime
-    public void verifyObjectExists(String objectName, long expectedSize) {
+    public void statObject(String objectName) {
         try {
             StatObjectArgs args = StatObjectArgs.builder()
                     .bucket(bucketName)
@@ -101,12 +101,7 @@ public class FileRepository {
                     .build();
 
             StatObjectResponse stat = minioClient.statObject(args);
-
-            if (stat.size() != expectedSize) {
-                throw new StorageException(new IllegalStateException("uploaded size mismatch"));
-            }
-
-            log.info("FileRepository.verifyObjectExists / objectName: {} / size: {}", objectName, stat.size());
+            log.info("FileRepository.statObject / objectName: {} / size: {}", objectName, stat.size());
         } catch (Exception e) {
             throw new StorageException(e);
         }

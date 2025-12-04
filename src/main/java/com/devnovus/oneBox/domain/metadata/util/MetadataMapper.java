@@ -1,5 +1,6 @@
 package com.devnovus.oneBox.domain.metadata.util;
 
+import com.devnovus.oneBox.domain.file.dto.PreSignedUrlResponse;
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
@@ -53,6 +54,13 @@ public class MetadataMapper {
                 .fileMetadata(metadata.getFileMetadata())
                 .createdAt(metadata.getCreatedAt())
                 .updatedAt(metadata.getUpdatedAt())
+                .build();
+    }
+
+    public PreSignedUrlResponse createPreSignedUrlResponse(Metadata metadata, String url) {
+        return PreSignedUrlResponse.builder()
+                .metadataId(metadata.getId())
+                .uploadUrl(url)
                 .build();
     }
 
