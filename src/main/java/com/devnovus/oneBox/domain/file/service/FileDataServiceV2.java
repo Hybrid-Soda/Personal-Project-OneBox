@@ -5,80 +5,42 @@ import com.devnovus.oneBox.domain.file.dto.DownloadFileDto;
 import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
 import com.devnovus.oneBox.domain.file.util.FileValidator;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
-import com.devnovus.oneBox.domain.metadata.enums.UploadStatus;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
-import com.devnovus.oneBox.domain.metadata.util.MetadataMapper;
-import com.devnovus.oneBox.domain.user.entity.User;
-import com.devnovus.oneBox.domain.user.repository.UserRepository;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
-import com.devnovus.oneBox.global.exception.StorageException;
-import com.devnovus.oneBox.global.util.MimeTypeResolver;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FileDataServiceV2 {
     private final FileValidator fileValidator;
-    private final MetadataMapper metadataMapper;
     private final FileRepository fileRepository;
-    private final UserRepository userRepository;
+    private final FileUploadManager fileUploadManager;
     private final MetadataRepository metadataRepository;
 
-    /** 파일업로드 */
-    public void uploadFile(Metadata metadata, UploadFileDto dto) {
+    /** 파일 업로드 */
+    public void uploadFile(UploadFileDto dto) {
+        Long ownerId = findOwnerIdByFolderId(dto.getParentFolderId());
+        Long fileId = fileUploadManager.createMetadata(dto);
+
         try {
-            // 스토리지 업로드
-            String eTag = fileRepository.save(dto, metadata.getFileMetadata().getObjectName());
+            String eTag = fileUploadManager.uploadToStorage(dto, fileId);
 
-            // 스토리지 업로드 오류 시 보상 트랜잭션 작동
-            if (eTag == null || eTag.isBlank()) {
-                compensateUploadFailure(metadata);
-                throw new ApplicationException(ApplicationError.E_TAG_NOT_RETURNED);
+            if (eTag == null) {
+                throw new Exception();
             }
-
-            metadata.getFileMetadata().setUploadStatus(UploadStatus.DONE);
-            metadataRepository.save(metadata);
-        } catch (StorageException e) {
-            compensateUploadFailure(metadata);
-            throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
+            fileUploadManager.handleUploadSuccess(ownerId, fileId);
+        } catch (Exception e) {
+            fileUploadManager.handleUploadFailure(ownerId, fileId);
+            throw new ApplicationException(e, ApplicationError.FILE_NOT_SAVED);
         }
     }
 
-    /** 메타데이터 생성 */
-    @Transactional
-    public Metadata createMetadataForUpload(UploadFileDto dto) {
-        // 파일 검증
-        User user = findUser(dto.getUserId());
-        String objectName = getObjectName(dto);
-        fileValidator.validateForUpload(dto, user.getUsedQuota());
-
-        // 메타데이터 생성
-        Metadata parent = findMetadata(dto.getParentFolderId());
-        Metadata metadata = metadataMapper.createMetadata(user, parent, objectName, dto);
-        metadataRepository.save(metadata);
-
-        // 유저 저장공간 반영
-        user.plusUsedQuota(dto.getFileSize());
-
-        return metadata;
-    }
-
-    @Transactional
-    public void compensateUploadFailure(Metadata metadata) {
-        User user = metadata.getOwner();
-
-        user.minusUsedQuota(metadata.getSize());
-        metadata.getFileMetadata().setUploadStatus(UploadStatus.FAIL);
-        metadataRepository.save(metadata);
-    }
-
+    /** 파일 다운로드 */
     @Transactional
     public DownloadFileDto downloadFile(Long fileId) {
         Metadata metadata = findMetadata(fileId);
@@ -86,22 +48,13 @@ public class FileDataServiceV2 {
 
         InputStream stream = fileRepository.download(metadata.getFileMetadata().getObjectName());
 
-        return new DownloadFileDto(metadata.getSize(), metadata.getName(), metadata.getFileMetadata().getMimeType(), stream);
+        return new DownloadFileDto(
+                metadata.getSize(), metadata.getName(), metadata.getFileMetadata().getMimeType(), stream
+        );
     }
 
-    private String getObjectName(UploadFileDto dto) {
-        String extension = FilenameUtils.getExtension(dto.getFileName());
-
-        if (dto.getContentType() == null) {
-            String mimeType = MimeTypeResolver.getMimeType(extension);
-            dto.setContentType(mimeType);
-        }
-
-        return String.format("%d/%s.%s", dto.getUserId(), UUID.randomUUID(), extension);
-    }
-
-    private User findUser(Long userId) {
-        return userRepository.findById(userId)
+    private Long findOwnerIdByFolderId(Long folderId) {
+        return metadataRepository.findOwnerIdById(folderId)
                 .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
     }
 

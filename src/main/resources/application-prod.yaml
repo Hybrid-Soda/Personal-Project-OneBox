@@ -1,11 +1,13 @@
 spring:
+  config:
+    import: optional:application-secret.yaml
   datasource:
     url: jdbc:postgresql://postgres:5432/one_box
     username: one_box
     password: one_box_123
 
 minio:
-  host: minio
+#  host: minio
   port: 9000
   access-key: one_box
   secret-key: one_box_123

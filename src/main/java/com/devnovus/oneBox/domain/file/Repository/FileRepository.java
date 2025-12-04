@@ -38,7 +38,7 @@ public class FileRepository {
             log.info("FileRepository.save / objectName: {} / ETag: {}", objectName, eTag);
             return eTag;
         } catch (Exception e) {
-            throw new StorageException(e);
+            throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
         }
     }
 
@@ -107,8 +107,6 @@ public class FileRepository {
             }
 
             log.info("FileRepository.verifyObjectExists / objectName: {} / size: {}", objectName, stat.size());
-        } catch (StorageException e) {
-            throw e;
         } catch (Exception e) {
             throw new StorageException(e);
         }

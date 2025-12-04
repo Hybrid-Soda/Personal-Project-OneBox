@@ -34,19 +34,15 @@ public class FileDataControllerV2 {
             @RequestPart("file") MultipartFile file
     ) {
         try (InputStream inputStream = file.getInputStream()) {
-            // 헤더 추출
             long userId = Long.parseLong(requiredHeader(req, "User-Id"));
             long parentFolderId = Long.parseLong(requiredHeader(req, "Parent-Folder-Id"));
 
-            // Dto 생성
             UploadFileDto dto = new UploadFileDto(
                     userId, parentFolderId, file.getSize(),
                     file.getOriginalFilename(), file.getContentType(), inputStream
             );
 
-            // 업로드 수행
-            Metadata metadata = fileService.createMetadataForUpload(dto);
-            fileService.uploadFile(metadata, dto);
+            fileService.uploadFile(dto);
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 완료"));
         } catch (IOException e) {
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 실패: " + e));
@@ -59,20 +55,16 @@ public class FileDataControllerV2 {
             HttpServletRequest req
     ) {
         try (InputStream inputStream = req.getInputStream()) {
-            // 헤더 추출
             long userId = Long.parseLong(requiredHeader(req, "User-Id"));
             long parentFolderId = Long.parseLong(requiredHeader(req, "Parent-Folder-Id"));
             String originalFilename = requiredHeader(req, "Original-Filename");
 
-            // Dto 생성
             UploadFileDto dto = new UploadFileDto(
                     userId, parentFolderId, req.getContentLengthLong(),
                     originalFilename, null, inputStream
             );
 
-            // 업로드 수행
-            Metadata metadata = fileService.createMetadataForUpload(dto);
-            fileService.uploadFile(metadata, dto);
+            fileService.uploadFile(dto);
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 완료"));
         } catch (IOException e) {
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 실패: " + e));
