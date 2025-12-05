@@ -1,4 +1,4 @@
-package com.devnovus.oneBox.domain.file.dto;
+package com.devnovus.oneBox.domain.folder.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MoveFileRequest {
+public class FolderMoveRequest {
     private Long parentFolderId; // 상위폴더아이디
 }

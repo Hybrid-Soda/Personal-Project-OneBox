@@ -1,7 +1,7 @@
 package com.devnovus.oneBox.domain.metadata.util;
 
 import com.devnovus.oneBox.domain.file.dto.PreSignedUrlResponse;
-import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
+import com.devnovus.oneBox.domain.file.dto.FileUploadDto;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import com.devnovus.oneBox.domain.user.entity.User;
@@ -27,7 +27,7 @@ public class MetadataMapper {
 
     // 파일 메타데이터 엔티티 생성
     public Metadata createMetadata(
-            User user, Metadata parentFolder, String objectName, UploadFileDto dto
+            User user, Metadata parentFolder, String objectName, FileUploadDto dto
     ) {
         String path = parentFolder.getPath() + dto.getFileName();
 

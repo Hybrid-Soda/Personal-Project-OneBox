@@ -1,10 +1,9 @@
 package com.devnovus.oneBox.domain.file.Repository;
 
-import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
+import com.devnovus.oneBox.domain.file.dto.FileUploadDto;
 import com.devnovus.oneBox.global.aop.time.ExecutionTime;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
-import com.devnovus.oneBox.global.exception.StorageException;
 import io.minio.*;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class FileRepository {
     private final MinioClient minioClient;
 
     @ExecutionTime
-    public String putObject(UploadFileDto dto, String objectName) {
+    public String putObject(FileUploadDto dto, String objectName) {
         try (InputStream inputStream = dto.getInputStream()) {
             PutObjectArgs args = PutObjectArgs.builder()
                     .bucket(bucketName)
@@ -88,7 +87,7 @@ public class FileRepository {
             log.info("FileRepository.getPreSignedObjectUrl / objectName: {}", objectName);
             return uploadUrl;
         } catch (Exception e) {
-            throw new StorageException(e);
+            throw new ApplicationException(ApplicationError.FAIL_TO_GET_URL);
         }
     }
 
@@ -103,7 +102,7 @@ public class FileRepository {
             StatObjectResponse stat = minioClient.statObject(args);
             log.info("FileRepository.statObject / objectName: {} / size: {}", objectName, stat.size());
         } catch (Exception e) {
-            throw new StorageException(e);
+            throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
         }
     }
 }

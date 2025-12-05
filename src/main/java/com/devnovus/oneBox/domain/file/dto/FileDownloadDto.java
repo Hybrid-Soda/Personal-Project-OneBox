@@ -7,7 +7,7 @@ import java.io.InputStream;
 
 @Getter
 @AllArgsConstructor
-public class DownloadFileDto {
+public class FileDownloadDto {
     private Long fileSize;
     private String fileName;
     private String mimeType;

@@ -14,7 +14,7 @@ public class PreSignedUrlRequest {
     private String fileName;
     private String contentType;
 
-    public UploadFileDto toUploadFileDto() {
-        return new UploadFileDto(userId, parentFolderId, fileSize, fileName, contentType, null);
+    public FileUploadDto toUploadFileDto() {
+        return new FileUploadDto(userId, parentFolderId, fileSize, fileName, contentType, null);
     }
 }

@@ -9,7 +9,7 @@ import java.io.InputStream;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UploadFileDto {
+public class FileUploadDto {
     private Long userId;
     private Long parentFolderId;
     private Long fileSize;

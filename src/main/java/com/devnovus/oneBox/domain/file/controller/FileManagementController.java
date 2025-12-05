@@ -1,7 +1,7 @@
 package com.devnovus.oneBox.domain.file.controller;
 
-import com.devnovus.oneBox.domain.file.dto.MoveFileRequest;
-import com.devnovus.oneBox.domain.file.dto.UpdateFileNameRequest;
+import com.devnovus.oneBox.domain.file.dto.FileMoveRequest;
+import com.devnovus.oneBox.domain.file.dto.FileRenameRequest;
 import com.devnovus.oneBox.domain.file.service.FileManagementService;
 import com.devnovus.oneBox.global.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ public class FileManagementController {
     @PatchMapping("/{fileId}/move")
     public ResponseEntity<BaseResponse<String>> moveFile(
             @PathVariable Long fileId,
-            @RequestBody MoveFileRequest request
+            @RequestBody FileMoveRequest request
     ) {
         fileService.moveFile(fileId, request);
         return ResponseEntity.ok().body(BaseResponse.of("파일 이동 완료"));
@@ -28,7 +28,7 @@ public class FileManagementController {
     @PatchMapping("/{fileId}/name")
     public ResponseEntity<BaseResponse<String>> updateFileName(
             @PathVariable Long fileId,
-            @RequestBody UpdateFileNameRequest request
+            @RequestBody FileRenameRequest request
     ) {
         fileService.updateFileName(fileId, request);
         return ResponseEntity.ok().body(BaseResponse.of("파일 이름 수정 완료"));

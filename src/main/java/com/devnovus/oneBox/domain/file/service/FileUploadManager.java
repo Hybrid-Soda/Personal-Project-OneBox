@@ -1,7 +1,7 @@
 package com.devnovus.oneBox.domain.file.service;
 
 import com.devnovus.oneBox.domain.file.Repository.FileRepository;
-import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
+import com.devnovus.oneBox.domain.file.dto.FileUploadDto;
 import com.devnovus.oneBox.domain.file.util.FileValidator;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.UploadStatus;
@@ -32,7 +32,7 @@ public class FileUploadManager {
 
     /** 메타데이터 생성 */
     @Transactional
-    public Long createMetadata(UploadFileDto dto) {
+    public Long createMetadata(FileUploadDto dto) {
         advisoryLockRepository.acquireTxLock(dto.getUserId());
         // 파일 검증
         Metadata parent = findMetadata(dto.getParentFolderId());
@@ -51,7 +51,7 @@ public class FileUploadManager {
     }
 
     /** 스토리지 업로드 */
-    public String uploadToStorage(UploadFileDto dto, Long fileId) {
+    public String uploadToStorage(FileUploadDto dto, Long fileId) {
         Metadata file = findMetadata(fileId);
         return fileRepository.putObject(dto, file.getFileMetadata().getObjectName());
     }
@@ -86,10 +86,10 @@ public class FileUploadManager {
 
     private Metadata findMetadata(Long metadataId) {
         return metadataRepository.findById(metadataId)
-                .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(ApplicationError.METADATA_NOT_FOUND));
     }
 
-    private String getObjectName(UploadFileDto dto) {
+    private String getObjectName(FileUploadDto dto) {
         String extension = FilenameUtils.getExtension(dto.getFileName());
 
         if (dto.getContentType() == null) {

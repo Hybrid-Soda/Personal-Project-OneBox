@@ -1,23 +1,18 @@
 package com.devnovus.oneBox.web.folder;
 
-import com.devnovus.oneBox.domain.folder.dto.MoveFolderRequest;
-import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
-import com.devnovus.oneBox.domain.folder.service.FolderServiceV1;
-import com.devnovus.oneBox.domain.folder.service.FolderServiceV3;
+import com.devnovus.oneBox.domain.folder.dto.FolderMoveRequest;
+import com.devnovus.oneBox.domain.folder.dto.FolderRenameRequest;
+import com.devnovus.oneBox.domain.folder.service.FolderService;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.domain.user.repository.UserRepository;
-import com.devnovus.oneBox.global.exception.ApplicationError;
-import com.devnovus.oneBox.global.exception.ApplicationException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.concurrent.*;
 
@@ -28,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 @ActiveProfiles("test")
 @DisplayName("폴더 동시성 테스트")
 public class FolderConcurrencyTest {
-    @Autowired private FolderServiceV3 folderService;
+    @Autowired private FolderService folderService;
     @Autowired private UserRepository userRepository;
     @Autowired private MetadataRepository metadataRepository;
     @Autowired private PlatformTransactionManager txManager;
@@ -109,7 +104,7 @@ public class FolderConcurrencyTest {
         }
     }
 
-    private boolean tryMove(Long folderId, MoveFolderRequest req) {
+    private boolean tryMove(Long folderId, FolderMoveRequest req) {
         try {
             folderService.moveFolder(folderId, req);
             return true;
@@ -118,7 +113,7 @@ public class FolderConcurrencyTest {
         }
     }
 
-    private boolean tryRename(Long folderId, RenameFolderRequest req) {
+    private boolean tryRename(Long folderId, FolderRenameRequest req) {
         try {
             folderService.renameFolder(folderId, req);
             return true;
@@ -134,8 +129,8 @@ public class FolderConcurrencyTest {
         @Test
         @DisplayName("동시에 동일 폴더를 서로 다른 부모로 이동 시 하나만 성공해야 한다")
         void concurrent_differentParents() throws Exception {
-            MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), parentA.getId());
-            MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), parentB.getId());
+            FolderMoveRequest requestA = new FolderMoveRequest(parentA.getId());
+            FolderMoveRequest requestB = new FolderMoveRequest(parentB.getId());
 
             runConcurrent(
                     () -> tryMove(parentC.getId(), requestA),
@@ -166,8 +161,8 @@ public class FolderConcurrencyTest {
                     .build();
             metadataRepository.save(otherA);
 
-            MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), parentB.getId());
-            MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), parentB.getId());
+            FolderMoveRequest requestA = new FolderMoveRequest(parentB.getId());
+            FolderMoveRequest requestB = new FolderMoveRequest(parentB.getId());
 
             boolean[] results = runConcurrent(
                     () -> tryMove(otherA.getId(), requestA),
@@ -180,8 +175,8 @@ public class FolderConcurrencyTest {
         @Test
         @DisplayName("동시에 순환 이동 시도 시 순환 구조가 생성되지 않아야 한다")
         void concurrent_circularMoveAttempt() throws Exception {
-            MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), parentB.getId());
-            MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), parentA.getId());
+            FolderMoveRequest requestA = new FolderMoveRequest(parentB.getId());
+            FolderMoveRequest requestB = new FolderMoveRequest(parentA.getId());
 
             boolean[] results = runConcurrent(
                     () -> tryMove(parentA.getId(), requestA),
@@ -194,8 +189,8 @@ public class FolderConcurrencyTest {
         @Test
         @DisplayName("동시에 순환 이동 시도 시 순환 구조가 생성되지 않아야 한다 - 2")
         void concurrent_circularMoveAttempt_2() throws Exception {
-            MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), childC.getId());
-            MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), parentA.getId());
+            FolderMoveRequest requestA = new FolderMoveRequest(childC.getId());
+            FolderMoveRequest requestB = new FolderMoveRequest(parentA.getId());
 
             boolean[] results = runConcurrent(
                     () -> tryMove(parentA.getId(), requestA),
@@ -208,8 +203,8 @@ public class FolderConcurrencyTest {
         @Test
         @DisplayName("동시에 순환 이동 시도 시 순환 구조가 생성되지 않아야 한다 - 3")
         void concurrent_circularMoveAttempt_3() throws Exception {
-            MoveFolderRequest requestA = new MoveFolderRequest(user.getId(), childC.getId());
-            MoveFolderRequest requestB = new MoveFolderRequest(user.getId(), childA.getId());
+            FolderMoveRequest requestA = new FolderMoveRequest(childC.getId());
+            FolderMoveRequest requestB = new FolderMoveRequest(childA.getId());
 
             boolean[] results = runConcurrent(
                     () -> tryMove(parentA.getId(), requestA),
@@ -233,8 +228,8 @@ public class FolderConcurrencyTest {
         @DisplayName("동시에 동일 이름으로 폴더명을 변경 시 하나만 성공해야 한다")
         void concurrent_duplicateName() throws Exception {
             String name = "D";
-            RenameFolderRequest requestA = new RenameFolderRequest(user.getId(), name);
-            RenameFolderRequest requestB = new RenameFolderRequest(user.getId(), name);
+            FolderRenameRequest requestA = new FolderRenameRequest(name);
+            FolderRenameRequest requestB = new FolderRenameRequest(name);
 
             boolean[] results = runConcurrent(
                     () -> tryRename(parentA.getId(), requestA),
@@ -250,8 +245,8 @@ public class FolderConcurrencyTest {
             String newName = "D";
             Long parentAId = parentA.getId();
 
-            RenameFolderRequest renameReq = new RenameFolderRequest(user.getId(), newName);
-            MoveFolderRequest moveReq = new MoveFolderRequest(user.getId(), parentAId);
+            FolderRenameRequest renameReq = new FolderRenameRequest(newName);
+            FolderMoveRequest moveReq = new FolderMoveRequest(parentAId);
 
             runConcurrent(
                     () -> tryRename(parentC.getId(), renameReq),
@@ -286,8 +281,8 @@ public class FolderConcurrencyTest {
         @DisplayName("폴더 이동 대량 경로 업데이트 중, 하위 폴더 변경 작업과 경합 시 경로가 깨지지 않아야 한다")
         void concurrent_conflictWithChildUpdate() throws Exception {
             String newChildName = "cC_renamed";
-            MoveFolderRequest moveReq = new MoveFolderRequest(user.getId(), parentB.getId());
-            RenameFolderRequest renameReq = new RenameFolderRequest(user.getId(), newChildName);
+            FolderMoveRequest moveReq = new FolderMoveRequest(parentB.getId());
+            FolderRenameRequest renameReq = new FolderRenameRequest(newChildName);
 
             runConcurrent(
                     () -> tryMove(parentC.getId(), moveReq),

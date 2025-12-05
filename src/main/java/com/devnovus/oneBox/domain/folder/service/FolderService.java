@@ -1,18 +1,17 @@
 package com.devnovus.oneBox.domain.folder.service;
 
 import com.devnovus.oneBox.domain.file.Repository.FileRepository;
-import com.devnovus.oneBox.domain.folder.dto.CreateFolderRequest;
-import com.devnovus.oneBox.domain.folder.dto.DeleteFolderRequest;
-import com.devnovus.oneBox.domain.folder.dto.MoveFolderRequest;
-import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.FolderCreateRequest;
+import com.devnovus.oneBox.domain.folder.dto.FolderMoveRequest;
+import com.devnovus.oneBox.domain.folder.dto.FolderRenameRequest;
 import com.devnovus.oneBox.domain.folder.util.FolderValidator;
 import com.devnovus.oneBox.domain.metadata.dto.MetadataResponse;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
+import com.devnovus.oneBox.domain.metadata.repository.AdvisoryLockRepository;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.metadata.util.MetadataMapper;
 import com.devnovus.oneBox.domain.user.entity.User;
 import com.devnovus.oneBox.domain.user.repository.UserRepository;
-import com.devnovus.oneBox.global.aop.lock.DistributedLock;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
@@ -25,29 +24,33 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FolderServiceV2 {
+public class FolderService {
     private final MetadataMapper metadataMapper;
     private final UserRepository userRepository;
     private final FileRepository fileRepository;
     private final FolderValidator folderValidator;
     private final MetadataRepository metadataRepository;
+    private final AdvisoryLockRepository advisoryLockRepository;
 
     /** 폴더생성 */
-    @DistributedLock(key = "#req.parentFolderId")
-    public Long createFolder(CreateFolderRequest req) {
-        User user = userRepository.getReferenceById(req.getUserId());
+    @Transactional
+    public Long createFolder(FolderCreateRequest req) {
+        Long ownerId = findOwnerId(req.getParentFolderId());
+        advisoryLockRepository.acquireTxLock(ownerId);
+
+        User owner = userRepository.getReferenceById(ownerId);
         Metadata parentFolder = findMetadata(req.getParentFolderId());
 
         folderValidator.validateForCreate(parentFolder, req.getFolderName());
-        return metadataRepository.save(metadataMapper.createMetadata(user, parentFolder, req.getFolderName())).getId();
+        return metadataRepository.save(metadataMapper.createMetadata(owner, parentFolder, req.getFolderName())).getId();
     }
 
     /** 폴더조회 */
     @Transactional(readOnly = true)
     public List<MetadataResponse> getListInFolder(Long folderId) {
         Metadata folder = findMetadata(folderId);
-        folderValidator.validateFolderType(folder.getType());
 
+        folderValidator.validateFolderType(folder.getType());
         return metadataRepository.findByParentFolderId(folderId)
                 .stream()
                 .map(metadataMapper::createMetadataResponse)
@@ -55,8 +58,11 @@ public class FolderServiceV2 {
     }
 
     /** 폴더이동 */
-    @DistributedLock(key = "#folderId")
-    public void moveFolder(Long folderId, MoveFolderRequest req) {
+    @Transactional
+    public void moveFolder(Long folderId, FolderMoveRequest req) {
+        Long ownerId = findOwnerId(folderId);
+        advisoryLockRepository.acquireTxLock(ownerId);
+
         Metadata folder = findMetadata(folderId);
         Metadata parentFolder = findMetadata(req.getParentFolderId());
 
@@ -71,8 +77,11 @@ public class FolderServiceV2 {
     }
 
     /** 폴더이름수정 */
-    @DistributedLock(key = "#folderId")
-    public void renameFolder(Long folderId, RenameFolderRequest req) {
+    @Transactional
+    public void renameFolder(Long folderId, FolderRenameRequest req) {
+        Long ownerId = findOwnerId(folderId);
+        advisoryLockRepository.acquireTxLock(ownerId);
+
         Metadata folder = findMetadata(folderId);
         Metadata parentFolder = folder.getParentFolder();
 
@@ -87,8 +96,11 @@ public class FolderServiceV2 {
     }
 
     /** 폴더삭제 */
-    @DistributedLock(key = "#folderId")
-    public void deleteFolder(Long folderId, DeleteFolderRequest req) {
+    @Transactional
+    public void deleteFolder(Long folderId) {
+        Long ownerId = findOwnerId(folderId);
+        advisoryLockRepository.acquireTxLock(ownerId);
+
         Metadata folder = findMetadata(folderId);
         User user = folder.getOwner();
         folderValidator.validateFolderType(folder.getType());
@@ -102,11 +114,16 @@ public class FolderServiceV2 {
         }
 
         // 메타데이터 삭제
-        metadataRepository.deleteAllChildren(req.getUserId(), folder.getPath());
+        metadataRepository.deleteAllChildren(ownerId, folder.getPath());
     }
 
     private Metadata findMetadata(Long metadataId) {
         return metadataRepository.findById(metadataId)
-                .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(ApplicationError.METADATA_NOT_FOUND));
+    }
+
+    private Long findOwnerId(Long metadataId) {
+        return metadataRepository.findOwnerIdById(metadataId)
+                .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
     }
 }

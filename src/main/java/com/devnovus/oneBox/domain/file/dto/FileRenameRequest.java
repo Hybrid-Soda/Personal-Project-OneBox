@@ -12,7 +12,7 @@ import static com.devnovus.oneBox.global.constant.CommonConstant.MAX_FILE_NAME_L
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateFileNameRequest {
+public class FileRenameRequest {
     @NotBlank(message = "파일 이름은 비어 있을 수 없습니다.")
     @Size(max = MAX_FILE_NAME_LENGTH, message = "파일 이름은 최대 " + MAX_FILE_NAME_LENGTH + "자까지 허용됩니다.")
     @Pattern(regexp = "^[^\\\\/:*?\"<>|]+$", message = "파일 이름에 허용되지 않는 특수문자가 포함되어 있습니다.")

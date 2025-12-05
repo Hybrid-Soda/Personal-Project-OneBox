@@ -1,8 +1,8 @@
 package com.devnovus.oneBox.domain.file.service;
 
 import com.devnovus.oneBox.domain.file.Repository.FileRepository;
-import com.devnovus.oneBox.domain.file.dto.MoveFileRequest;
-import com.devnovus.oneBox.domain.file.dto.UpdateFileNameRequest;
+import com.devnovus.oneBox.domain.file.dto.FileMoveRequest;
+import com.devnovus.oneBox.domain.file.dto.FileRenameRequest;
 import com.devnovus.oneBox.domain.file.util.FileValidator;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
@@ -22,7 +22,7 @@ public class FileManagementService {
 
     /** 파일이동 */
     @Transactional
-    public void moveFile(Long fileId, MoveFileRequest req) {
+    public void moveFile(Long fileId, FileMoveRequest req) {
         Metadata file = findMetadata(fileId);
         Metadata parentFolder = findMetadata(req.getParentFolderId());
 
@@ -39,7 +39,7 @@ public class FileManagementService {
 
     /** 파일이름수정 */
     @Transactional
-    public void updateFileName(Long fileId, UpdateFileNameRequest req) {
+    public void updateFileName(Long fileId, FileRenameRequest req) {
         Metadata file = findMetadata(fileId);
 
         // 검증
@@ -68,6 +68,6 @@ public class FileManagementService {
 
     private Metadata findMetadata(Long folderId) {
         return metadataRepository.findById(folderId)
-                .orElseThrow(() -> new ApplicationException(ApplicationError.FOLDER_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(ApplicationError.METADATA_NOT_FOUND));
     }
 }

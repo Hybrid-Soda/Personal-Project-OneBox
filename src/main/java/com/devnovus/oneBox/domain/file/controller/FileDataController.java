@@ -1,12 +1,13 @@
 package com.devnovus.oneBox.domain.file.controller;
 
-import com.devnovus.oneBox.domain.file.dto.DownloadFileDto;
-import com.devnovus.oneBox.domain.metadata.entity.Metadata;
-import com.devnovus.oneBox.global.response.BaseResponse;
+import com.devnovus.oneBox.domain.file.dto.FileDownloadDto;
+import com.devnovus.oneBox.domain.file.dto.PreSignedUrlRequest;
+import com.devnovus.oneBox.domain.file.dto.PreSignedUrlResponse;
+import com.devnovus.oneBox.domain.file.dto.FileUploadDto;
+import com.devnovus.oneBox.domain.file.service.FileDataService;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
-import com.devnovus.oneBox.domain.file.service.FileDataServiceV1;
-import com.devnovus.oneBox.domain.file.dto.UploadFileDto;
+import com.devnovus.oneBox.global.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +23,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@RequestMapping("/files/v1")
+@RequestMapping("/files")
 @RequiredArgsConstructor
-public class FileDataControllerV1 {
-    private final FileDataServiceV1 fileService;
+public class FileDataController {
+    private final FileDataService fileService;
 
     /** 파일업로드 - multipart 방식 */
     @PostMapping("/upload")
@@ -34,17 +35,14 @@ public class FileDataControllerV1 {
             @RequestPart("file") MultipartFile file
     ) {
         try (InputStream inputStream = file.getInputStream()) {
-            // 헤더 추출
             long userId = Long.parseLong(requiredHeader(req, "User-Id"));
             long parentFolderId = Long.parseLong(requiredHeader(req, "Parent-Folder-Id"));
 
-            // Dto 생성
-            UploadFileDto dto = new UploadFileDto(
+            FileUploadDto dto = new FileUploadDto(
                     userId, parentFolderId, file.getSize(),
                     file.getOriginalFilename(), file.getContentType(), inputStream
             );
 
-            // 업로드 수행
             fileService.uploadFile(dto);
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 완료"));
         } catch (IOException e) {
@@ -54,27 +52,43 @@ public class FileDataControllerV1 {
 
     /** 파일업로드 - binary stream 방식 */
     @PostMapping("/upload-stream")
-    public ResponseEntity<BaseResponse<String>> uploadFileOneBlock(
+    public ResponseEntity<BaseResponse<String>> uploadFile(
             HttpServletRequest req
     ) {
         try (InputStream inputStream = req.getInputStream()) {
-            // 헤더 추출
             long userId = Long.parseLong(requiredHeader(req, "User-Id"));
             long parentFolderId = Long.parseLong(requiredHeader(req, "Parent-Folder-Id"));
             String originalFilename = requiredHeader(req, "Original-Filename");
 
-            // Dto 생성
-            UploadFileDto dto = new UploadFileDto(
+            FileUploadDto dto = new FileUploadDto(
                     userId, parentFolderId, req.getContentLengthLong(),
                     originalFilename, null, inputStream
             );
 
-            // 업로드 수행
             fileService.uploadFile(dto);
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 완료"));
         } catch (IOException e) {
             return ResponseEntity.status(201).body(BaseResponse.of("업로드 실패: " + e));
         }
+    }
+
+    /** pre-signed URL 생성 */
+    @PostMapping("/pre-signed")
+    public ResponseEntity<BaseResponse<PreSignedUrlResponse>> createPreSignedUrl(
+            @RequestBody PreSignedUrlRequest request
+    ) {
+        PreSignedUrlResponse response = fileService.createPreSignedUrl(request);
+        return ResponseEntity.status(201).body(BaseResponse.of(response));
+    }
+
+    /** pre-signed 업로드 완료 처리 */
+    @PostMapping("/pre-signed/{fileId}/complete")
+    public ResponseEntity<BaseResponse<String>> completeUpload(
+            @PathVariable Long fileId,
+            @RequestParam String eTag
+    ) {
+        fileService.completeUpload(fileId, eTag);
+        return ResponseEntity.ok(BaseResponse.of("업로드 완료"));
     }
 
     /** 파일다운로드 */
@@ -83,7 +97,7 @@ public class FileDataControllerV1 {
             HttpServletResponse res,
             @PathVariable Long fileId
     ) throws IOException {
-        DownloadFileDto dto = fileService.downloadFile(fileId);
+        FileDownloadDto dto = fileService.downloadFile(fileId);
 
         res.setContentType(dto.getMimeType());
         res.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(dto.getFileSize()));

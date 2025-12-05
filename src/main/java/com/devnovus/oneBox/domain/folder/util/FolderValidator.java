@@ -1,6 +1,6 @@
 package com.devnovus.oneBox.domain.folder.util;
 
-import com.devnovus.oneBox.domain.folder.dto.RenameFolderRequest;
+import com.devnovus.oneBox.domain.folder.dto.FolderRenameRequest;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
@@ -39,7 +39,7 @@ public class FolderValidator {
     }
 
     /** 폴더이름수정 시 검증 */
-    public void validateForRename(Metadata parentFolder, Metadata folder, RenameFolderRequest req) {
+    public void validateForRename(Metadata parentFolder, Metadata folder, FolderRenameRequest req) {
         validateFolderType(parentFolder.getType());
         validateRootFolderUpdate(folder);
         validateDuplicatedName(req.getFolderName(), parentFolder.getId());
