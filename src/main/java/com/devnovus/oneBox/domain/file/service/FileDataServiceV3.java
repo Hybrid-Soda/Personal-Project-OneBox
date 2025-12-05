@@ -24,11 +24,18 @@ public class FileDataServiceV3 {
     public PreSignedUrlResponse createPreSignedUrl(PreSignedUrlRequest request) {
         UploadFileDto dto = request.toUploadFileDto();
         Long fileId = fileUploadManager.createMetadata(dto);
-
         Metadata file = findMetadata(fileId);
-        String uploadUrl = fileRepository.getPreSignedObjectUrl(file.getFileMetadata().getObjectName(), dto.getContentType());
 
-        return metadataMapper.createPreSignedUrlResponse(file, uploadUrl);
+        try {
+            String uploadUrl = fileRepository.getPreSignedObjectUrl(
+                    file.getFileMetadata().getObjectName(), dto.getContentType()
+            );
+            return metadataMapper.createPreSignedUrlResponse(file, uploadUrl);
+        } catch (Exception e) {
+            Long ownerId = findOwnerIdByFolderId(dto.getParentFolderId());
+            fileUploadManager.handleUploadFailure(ownerId, fileId);
+            throw new ApplicationException(ApplicationError.FAIL_TO_GET_URL);
+        }
     }
 
     /** 업로드 완료 */
@@ -45,7 +52,7 @@ public class FileDataServiceV3 {
             fileUploadManager.handleUploadSuccess(ownerId, fileId);
         } catch (Exception e) {
             fileUploadManager.handleUploadFailure(ownerId, fileId);
-            throw new ApplicationException(ApplicationError.FILE_NOT_SAVED);
+            throw new ApplicationException(ApplicationError.FAIL_TO_COMPLETE_UPLOAD);
         }
     }
 

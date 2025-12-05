@@ -35,17 +35,17 @@ public class FileUploadManager {
     public Long createMetadata(UploadFileDto dto) {
         advisoryLockRepository.acquireTxLock(dto.getUserId());
         // 파일 검증
-        User user = findUser(dto.getUserId());
+        Metadata parent = findMetadata(dto.getParentFolderId());
+        User owner = parent.getOwner();
         String objectName = getObjectName(dto);
-        fileValidator.validateForUpload(dto, user.getUsedQuota());
+        fileValidator.validateForUpload(dto, owner.getUsedQuota());
 
         // 메타데이터 생성
-        Metadata parent = findMetadata(dto.getParentFolderId());
-        Metadata metadata = metadataMapper.createMetadata(user, parent, objectName, dto);
+        Metadata metadata = metadataMapper.createMetadata(owner, parent, objectName, dto);
         metadataRepository.save(metadata);
 
         // 유저 저장공간 반영
-        user.plusUsedQuota(dto.getFileSize());
+        owner.plusUsedQuota(dto.getFileSize());
 
         return metadata.getId();
     }

@@ -35,6 +35,8 @@ public enum ApplicationError implements ErrorCode {
     FILE_NOT_SAVED(HttpStatus.INTERNAL_SERVER_ERROR,"파일 업로드에 실패했습니다.", 500),
     FILE_NOT_DOWNLOADED(HttpStatus.INTERNAL_SERVER_ERROR,"파일 다운로드에 실패했습니다.", 500),
     FILE_NOT_DELETED(HttpStatus.INTERNAL_SERVER_ERROR,"파일 삭제에 실패했습니다.", 500),
+    FAIL_TO_GET_URL(HttpStatus.INTERNAL_SERVER_ERROR,"pre-signed url 발급에 실패했습니다.", 500),
+    FAIL_TO_COMPLETE_UPLOAD(HttpStatus.INTERNAL_SERVER_ERROR,"파일 업로드 확정에 실패했습니다.", 500),
     ;
 
     private final HttpStatus httpStatus;
