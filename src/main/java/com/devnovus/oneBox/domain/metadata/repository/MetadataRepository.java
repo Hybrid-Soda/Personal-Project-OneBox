@@ -2,9 +2,7 @@ package com.devnovus.oneBox.domain.metadata.repository;
 
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,31 +23,6 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
 
     // 폴더 탐색
     List<Metadata> findByParentFolderId(Long parentFolderId);
-
-    @Modifying
-    @Query(value =
-            "UPDATE metadata " +
-            "SET path = REPLACE(path, :oldPrefix, :newPrefix) " +
-            "WHERE owner_id = :ownerId " +
-            "AND path LIKE CONCAT(:oldPrefix, '%')",
-            nativeQuery = true
-    )
-    void updatePathByBulk(
-            @Param("ownerId") Long ownerId,
-            @Param("oldPrefix") String oldPrefix,
-            @Param("newPrefix") String newPrefix
-    );
-
-    // 최대 path 길이를 가진 자식의 path 조회
-    @Query(value =
-            "SELECT path FROM metadata " +
-            "WHERE owner_id = :ownerId " +
-            "AND path LIKE CONCAT(:oldPath, '%') " +
-            "ORDER BY LENGTH(path) DESC " +
-            "LIMIT 1",
-            nativeQuery = true
-    )
-    Optional<String> findLongestChildPath(@Param("ownerId") Long ownerId, @Param("oldPath") String oldPath);
 
     // 하위 폴더 CTE 조회
     @Query(value =

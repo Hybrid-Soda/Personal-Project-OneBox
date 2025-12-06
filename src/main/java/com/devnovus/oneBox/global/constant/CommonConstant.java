@@ -40,7 +40,6 @@ public class CommonConstant {
             Map.entry("avi", "video/x-msvideo")
     );
 
-    public static final int MAX_PATH_LENGTH = 255;
     public static final int MAX_CHILD_FOLDERS = 100;
     public static final int MAX_FILE_NAME_LENGTH = 254;
 }

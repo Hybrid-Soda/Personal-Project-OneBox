@@ -4,7 +4,7 @@ import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
-import com.devnovus.oneBox.domain.file.dto.FileUploadDto;
+import com.devnovus.oneBox.domain.file.dto.FileUploadRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ public class FileValidator {
     private final MetadataRepository metadataRepository;
 
     /** 업로드 파일 검증 */
-    public void validateForUpload(FileUploadDto dto, Long usedQuota) {
+    public void validateForUpload(FileUploadRequest dto, Long usedQuota) {
         validateFileName(dto.getFileName());
         validateMimeType(dto.getContentType());
         validateDuplicateName(dto.getParentFolderId(), dto.getFileName());

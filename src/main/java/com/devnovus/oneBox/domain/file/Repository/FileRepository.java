@@ -1,6 +1,6 @@
 package com.devnovus.oneBox.domain.file.Repository;
 
-import com.devnovus.oneBox.domain.file.dto.FileUploadDto;
+import com.devnovus.oneBox.domain.file.dto.FileUploadRequest;
 import com.devnovus.oneBox.global.aop.time.ExecutionTime;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
@@ -24,7 +24,7 @@ public class FileRepository {
     private final MinioClient minioClient;
 
     @ExecutionTime
-    public String putObject(FileUploadDto dto, String objectName) {
+    public String putObject(FileUploadRequest dto, String objectName) {
         try (InputStream inputStream = dto.getInputStream()) {
             PutObjectArgs args = PutObjectArgs.builder()
                     .bucket(bucketName)

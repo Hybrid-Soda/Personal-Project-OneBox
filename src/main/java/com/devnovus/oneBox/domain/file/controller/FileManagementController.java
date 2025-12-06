@@ -26,11 +26,11 @@ public class FileManagementController {
 
     /** 파일이름수정 */
     @PatchMapping("/{fileId}/name")
-    public ResponseEntity<BaseResponse<String>> updateFileName(
+    public ResponseEntity<BaseResponse<String>> renameFile(
             @PathVariable Long fileId,
             @RequestBody FileRenameRequest request
     ) {
-        fileService.updateFileName(fileId, request);
+        fileService.renameFile(fileId, request);
         return ResponseEntity.ok().body(BaseResponse.of("파일 이름 수정 완료"));
     }
 

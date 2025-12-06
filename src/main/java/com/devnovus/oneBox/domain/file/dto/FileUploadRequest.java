@@ -9,13 +9,12 @@ import java.io.InputStream;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FileUploadDto {
-    private Long userId;
+public class FileUploadRequest {
     private Long parentFolderId;
     private Long fileSize;
     private String fileName;
     private String contentType;
-    private InputStream inputStream;
+    private InputStream inputStream = null;
 
     public void setContentType(String contentType) {
         this.contentType = contentType;

@@ -6,12 +6,11 @@ import com.devnovus.oneBox.domain.file.dto.FileRenameRequest;
 import com.devnovus.oneBox.domain.file.util.FileValidator;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
-import com.devnovus.oneBox.domain.user.entity.User;
+import com.devnovus.oneBox.global.aop.lock.AdvisoryLock;
 import com.devnovus.oneBox.global.exception.ApplicationError;
 import com.devnovus.oneBox.global.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,37 +20,36 @@ public class FileManagementService {
     private final MetadataRepository metadataRepository;
 
     /** 파일이동 */
-    @Transactional
+    @AdvisoryLock(metadataId = "#fileId")
     public void moveFile(Long fileId, FileMoveRequest req) {
+        // ready
         Metadata file = findMetadata(fileId);
-        Metadata parentFolder = findMetadata(req.getParentFolderId());
-
-        // 검증 및 이동
+        Metadata newParentFolder = findMetadata(req.getParentFolderId());
         fileValidator.validateForUpdate(file.getType(), req.getParentFolderId(), file.getName());
-        file.setParentFolder(parentFolder);
+        // exec
+        file.setParentFolder(newParentFolder);
     }
 
     /** 파일이름수정 */
-    @Transactional
-    public void updateFileName(Long fileId, FileRenameRequest req) {
+    @AdvisoryLock(metadataId = "#fileId")
+    public void renameFile(Long fileId, FileRenameRequest req) {
+        // ready
         Metadata file = findMetadata(fileId);
-
-        // 검증 및 수정
         fileValidator.validateForUpdate(file.getType(), file.getParentFolder().getId(), req.getFileName());
+        // exec
         file.setName(req.getFileName());
     }
 
     /** 파일삭제 */
-    @Transactional
+    @AdvisoryLock(metadataId = "#fileId")
     public void removeFile(Long fileId) {
+        // ready
         Metadata file = findMetadata(fileId);
-        User owner = file.getOwner();
-
         fileValidator.validateFileType(file.getType());
-
+        // exec
         fileRepository.removeObject(file.getFileMetadata().getObjectName());
         metadataRepository.delete(file);
-        owner.minusUsedQuota(file.getSize());
+        file.getOwner().minusUsedQuota(file.getSize());
     }
 
     private Metadata findMetadata(Long folderId) {

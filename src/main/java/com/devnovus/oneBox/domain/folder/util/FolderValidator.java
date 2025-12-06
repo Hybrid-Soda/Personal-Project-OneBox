@@ -9,10 +9,7 @@ import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 import static com.devnovus.oneBox.global.constant.CommonConstant.MAX_CHILD_FOLDERS;
-import static com.devnovus.oneBox.global.constant.CommonConstant.MAX_PATH_LENGTH;
 
 @Component
 @RequiredArgsConstructor
@@ -29,16 +26,16 @@ public class FolderValidator {
     /** 폴더 이동 시 검증 */
     public void validateForMove(Metadata parentFolder, Metadata folder) {
         validateFolderType(parentFolder.getType());
-        validateRootFolderUpdate(folder);
-        validateNoCircularMove(parentFolder.getId(), folder.getId());
         validateChildFolderLimit(parentFolder.getId());
+        validateNoCircularMove(parentFolder.getId(), folder.getId());
+        validateRootFolderUpdate(folder);
     }
 
     /** 폴더이름수정 시 검증 */
     public void validateForRename(Metadata parentFolder, Metadata folder, FolderRenameRequest req) {
         validateFolderType(parentFolder.getType());
-        validateRootFolderUpdate(folder);
         validateDuplicatedName(req.getFolderName(), parentFolder.getId());
+        validateRootFolderUpdate(folder);
     }
 
     /** 폴더 타입 여부 검증 */
@@ -70,7 +67,7 @@ public class FolderValidator {
 
     /** 자식으로 이동하는 순환 방지 */
     public void validateNoCircularMove(Long newParentId, Long folderId) {
-        if (newParentId < folderId) {
+        if (newParentId > folderId) {
             throw new ApplicationException(ApplicationError.FOLDER_CANNOT_MOVE_TO_DESCENDANT);
         }
     }
