@@ -24,18 +24,14 @@ public class FolderValidator {
         validateFolderType(parentFolder.getType());
         validateDuplicatedName(folderName, parentFolder.getId());
         validateChildFolderLimit(parentFolder.getId());
-        validatePathLength(parentFolder.getPath(), folderName);
     }
 
     /** 폴더 이동 시 검증 */
     public void validateForMove(Metadata parentFolder, Metadata folder) {
         validateFolderType(parentFolder.getType());
         validateRootFolderUpdate(folder);
-        validateNoCircularMove(parentFolder.getPath(), folder.getPath());
+        validateNoCircularMove(parentFolder.getId(), folder.getId());
         validateChildFolderLimit(parentFolder.getId());
-        validatePathLength(
-                folder.getOwner().getId(), parentFolder.getPath(), folder.getPath(), folder.getName()
-        );
     }
 
     /** 폴더이름수정 시 검증 */
@@ -43,9 +39,6 @@ public class FolderValidator {
         validateFolderType(parentFolder.getType());
         validateRootFolderUpdate(folder);
         validateDuplicatedName(req.getFolderName(), parentFolder.getId());
-        validatePathLength(
-                folder.getOwner().getId(), parentFolder.getPath(), folder.getPath(), folder.getName()
-        );
     }
 
     /** 폴더 타입 여부 검증 */
@@ -75,34 +68,9 @@ public class FolderValidator {
         }
     }
 
-    /** 경로 길이 검증 (생성 시) */
-    public void validatePathLength(String parentPath, String newFolderName) {
-        int length = calculateNewPathLength(parentPath, newFolderName);
-
-        if (length > MAX_PATH_LENGTH) {
-            throw new ApplicationException(ApplicationError.FOLDER_PATH_LENGTH_EXCEEDED);
-        }
-    }
-
-    /** 경로 길이 검증 (수정/이동 시) */
-    public void validatePathLength(
-            Long ownerId, String targetParentPath, String oldPath, String newFolderName
-    ) {
-        Optional<String> longestChildPath = metadataRepository.findLongestChildPath(ownerId, oldPath);
-
-        if (longestChildPath.isPresent()) {
-            int relativeLength = longestChildPath.get().substring(oldPath.length()).length();
-            int length = calculateNewPathLength(targetParentPath, newFolderName) + relativeLength;
-
-            if (length > MAX_PATH_LENGTH) {
-                throw new ApplicationException(ApplicationError.FOLDER_PATH_LENGTH_EXCEEDED);
-            }
-        }
-    }
-
     /** 자식으로 이동하는 순환 방지 */
-    public void validateNoCircularMove(String parentPath, String currentPath) {
-        if (parentPath.contains(currentPath)) {
+    public void validateNoCircularMove(Long newParentId, Long folderId) {
+        if (newParentId < folderId) {
             throw new ApplicationException(ApplicationError.FOLDER_CANNOT_MOVE_TO_DESCENDANT);
         }
     }
@@ -112,10 +80,5 @@ public class FolderValidator {
         if (folder.getParentFolder() == null) {
             throw new ApplicationException(ApplicationError.FOLDER_NOT_ALLOWED_ROOT_MODIFY);
         }
-    }
-
-    /** 공통 경로 계산 로직 */
-    private int calculateNewPathLength(String parentPath, String folderName) {
-        return parentPath.length() + folderName.length() + 1; // '/' 포함
     }
 }

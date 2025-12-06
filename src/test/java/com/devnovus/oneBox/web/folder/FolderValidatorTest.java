@@ -35,13 +35,11 @@ public class FolderValidatorTest {
                 .owner(user)
                 .parentFolder(null)
                 .name("root")
-                .path("/")
                 .build();
         childFolder = Metadata.builder()
                 .owner(user)
                 .parentFolder(rootFolder)
                 .name("child")
-                .path("/child/")
                 .build();
     }
 
@@ -82,22 +80,10 @@ public class FolderValidatorTest {
     }
 
     @Test
-    @DisplayName("경로 길이 제한 검증 테스트")
-    void pathLengthLimitValidationTest() {
-        // given
-        String longParentPath = "/" + "A".repeat(254);
-
-        // when & then
-        assertThatThrownBy(() -> folderValidator.validatePathLength(longParentPath, "child2"))
-                .isInstanceOf(ApplicationException.class)
-                .hasMessageContaining(ApplicationError.FOLDER_PATH_LENGTH_EXCEEDED.getMessage());
-    }
-
-    @Test
     @DisplayName("순환 구조 여부 검증 테스트")
     void cyclicStructureValidationTest() {
         // when & then
-        assertThatThrownBy(() -> folderValidator.validateNoCircularMove("/parent/child/child2/", "/parent/child/"))
+        assertThatThrownBy(() -> folderValidator.validateNoCircularMove(6L, 7L))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.FOLDER_CANNOT_MOVE_TO_DESCENDANT.getMessage());
     }

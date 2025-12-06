@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MetadataRepository extends JpaRepository<Metadata, Long> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT m FROM Metadata m WHERE m.id = :id")
-    Optional<Metadata> findByIdForUpdate(@Param("id") Long id);
-
     // 소유자 식별키 조회
     @Query("SELECT m.owner.id FROM Metadata m WHERE m.id = :id")
     Optional<Long> findOwnerIdById(Long id);
@@ -55,23 +51,22 @@ public interface MetadataRepository extends JpaRepository<Metadata, Long> {
     )
     Optional<String> findLongestChildPath(@Param("ownerId") Long ownerId, @Param("oldPath") String oldPath);
 
-    // 폴더 하위 자원 삭제
-    @Modifying
+    // 하위 폴더 CTE 조회
     @Query(value =
-            "DELETE FROM metadata " +
-            "WHERE owner_id = :ownerId " +
-            "AND path LIKE CONCAT(:path, '%')",
+            "WITH RECURSIVE metadata_tree AS (" +
+            " SELECT * FROM metadata WHERE id = :folderId" +
+            " UNION ALL" +
+            " SELECT m.* FROM metadata m" +
+            " INNER JOIN metadata_tree t ON m.parent_folder_id = t.id " +
+            ") " +
+            "SELECT * FROM metadata_tree " +
+            "ORDER BY id DESC",
             nativeQuery = true
     )
-    void deleteAllChildren(@Param("ownerId") Long ownerId, @Param("path") String path);
+    List<Metadata> findAllChildrenByRecursive(@Param("folderId") Long folderId);
 
-    // 폴더 하위 파일 검색
-    @Query(value =
-            "SELECT * FROM metadata " +
-            "WHERE owner_id = :ownerId " +
-            "AND type = 'FILE' " +
-            "AND path LIKE CONCAT(:path, '%')",
-            nativeQuery = true
-    )
-    List<Metadata> findChildFiles(@Param("ownerId") Long ownerId, @Param("path") String path);
+    // batch 삭제 처리
+    @Modifying
+    @Query("DELETE FROM Metadata m WHERE m.id IN :ids")
+    void deleteAllByIds(@Param("ids") List<Long> ids);
 }

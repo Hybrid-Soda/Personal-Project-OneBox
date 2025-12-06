@@ -39,37 +39,12 @@ public class FolderConcurrencyTest {
     @BeforeEach
     void setUp() {
         user = userRepository.save(new User());
-
-        root = metadataRepository.save(
-                Metadata.builder()
-                        .owner(user).parentFolder(null).name("root").path("/").type(MetadataType.FOLDER)
-                        .build()
-        );
-        parentA = metadataRepository.save(
-                Metadata.builder()
-                        .owner(user).parentFolder(root).name("A").path("/A/").type(MetadataType.FOLDER)
-                        .build()
-        );
-        parentB = metadataRepository.save(
-                Metadata.builder()
-                        .owner(user).parentFolder(root).name("B").path("/B/").type(MetadataType.FOLDER)
-                        .build()
-        );
-        parentC = metadataRepository.save(
-                Metadata.builder()
-                        .owner(user).parentFolder(root).name("C").path("/C/").type(MetadataType.FOLDER)
-                        .build()
-        );
-        childA = metadataRepository.save(
-                Metadata.builder()
-                        .owner(user).parentFolder(parentA).name("cA").path("/A/cA/").type(MetadataType.FOLDER)
-                        .build()
-        );
-        childC = metadataRepository.save(
-                Metadata.builder()
-                        .owner(user).parentFolder(parentC).name("cC").path("/C/cC/").type(MetadataType.FOLDER)
-                        .build()
-        );
+        root = metadataRepository.save(new Metadata(user, null, "root", MetadataType.FOLDER, 0L, null, null));
+        parentA = metadataRepository.save(new Metadata(user, root, "A", MetadataType.FOLDER, 0L, null, null));
+        parentB = metadataRepository.save(new Metadata(user, root, "B", MetadataType.FOLDER, 0L, null, null));
+        parentC = metadataRepository.save(new Metadata(user, root, "C", MetadataType.FOLDER, 0L, null, null));
+        childA = metadataRepository.save(new Metadata(user, parentA, "cA", MetadataType.FOLDER, 0L, null, null));
+        childC = metadataRepository.save(new Metadata(user, parentC, "cC", MetadataType.FOLDER, 0L, null, null));
         metadataRepository.flush();
     }
 
@@ -136,28 +111,13 @@ public class FolderConcurrencyTest {
                     () -> tryMove(parentC.getId(), requestA),
                     () -> tryMove(parentC.getId(), requestB)
             );
-
-            Metadata updatedParentC = metadataRepository.findById(parentC.getId()).orElseThrow();
-            Metadata updatedChildC = metadataRepository.findById(childC.getId()).orElseThrow();
-
-            String expectedPathA = parentA.getPath() + parentC.getName() + "/";
-            String expectedPathB = parentB.getPath() + parentC.getName() + "/";
-            String expectedPathC = updatedParentC.getPath() + childC.getName() + "/";
-
-            assertAll(
-                    () -> assertThat(
-                            updatedParentC.getPath().equals(expectedPathA) ||
-                                    updatedParentC.getPath().equals(expectedPathB)
-                    ).isTrue(),
-                    () -> assertThat(updatedChildC.getPath()).isEqualTo(expectedPathC)
-            );
         }
 
         @Test
         @DisplayName("동시에 동일 경로로 같은 이름의 폴더를 이동 시 하나만 성공해야 한다")
         void concurrent_duplicateName() throws Exception {
             Metadata otherA = Metadata.builder()
-                    .owner(user).parentFolder(parentC).name("A").path("/C/A/").type(MetadataType.FOLDER)
+                    .owner(user).parentFolder(parentC).name("A").type(MetadataType.FOLDER)
                     .build();
             metadataRepository.save(otherA);
 
@@ -211,11 +171,6 @@ public class FolderConcurrencyTest {
                     () -> tryMove(parentC.getId(), requestB)
             );
 
-            System.out.println(
-                    metadataRepository.findById(childA.getId()).orElseThrow().getPath());
-            System.out.println(
-                    metadataRepository.findById(childC.getId()).orElseThrow().getPath());
-
             assertThat(results[0] ^ results[1]).isTrue();
         }
     }
@@ -251,57 +206,6 @@ public class FolderConcurrencyTest {
             runConcurrent(
                     () -> tryRename(parentC.getId(), renameReq),
                     () -> tryMove(parentC.getId(), moveReq)
-            );
-
-            Metadata updatedParentC = metadataRepository.findById(parentC.getId()).orElseThrow();
-            Metadata updatedChildC = metadataRepository.findById(childC.getId()).orElseThrow();
-
-            String renamePath = "/D/cC/";
-            String movePath = "/A/C/cC/";
-
-            assertThat(updatedParentC).satisfiesAnyOf(
-                    // Case1: 이름 변경 성공
-                    it -> {
-                        assertThat(it.getName()).isEqualTo(newName);
-                        assertThat(updatedChildC.getPath()).isEqualTo(renamePath);
-                    },
-                    // Case2: A로 이동 성공
-                    it -> {
-                        assertThat(updatedChildC.getPath()).isEqualTo(movePath);
-                    }
-            );
-        }
-    }
-
-    @Nested
-    @DisplayName("폴더 경로 수정 테스트")
-    class BulkUpdatePathValidation {
-
-        @Test
-        @DisplayName("폴더 이동 대량 경로 업데이트 중, 하위 폴더 변경 작업과 경합 시 경로가 깨지지 않아야 한다")
-        void concurrent_conflictWithChildUpdate() throws Exception {
-            String newChildName = "cC_renamed";
-            FolderMoveRequest moveReq = new FolderMoveRequest(parentB.getId());
-            FolderRenameRequest renameReq = new FolderRenameRequest(newChildName);
-
-            runConcurrent(
-                    () -> tryMove(parentC.getId(), moveReq),
-                    () -> tryRename(childC.getId(), renameReq)
-            );
-
-            Metadata updatedParentC = metadataRepository.findById(parentC.getId()).orElseThrow();
-            Metadata updatedChildC = metadataRepository.findById(childC.getId()).orElseThrow();
-            String expectedPath = updatedParentC.getPath() + updatedChildC.getName() + "/";
-
-            assertAll(
-                    // A 폴더는 최종적으로 B 아래로 이동되어야 한다.
-                    () -> assertThat(updatedParentC.getParentFolder().getId()).isEqualTo(parentB.getId()),
-                    // childA 는 여전히 A 의 자식이어야 한다.
-                    () -> assertThat(updatedChildC.getParentFolder().getId()).isEqualTo(updatedParentC.getId()),
-                    // childA 의 이름은 요청대로 변경되어야 한다.
-                    () -> assertThat(updatedChildC.getName()).isEqualTo(newChildName),
-                    // path도 일관되어야 한다.
-                    () -> assertThat(updatedChildC.getPath()).isEqualTo(expectedPath)
             );
         }
     }

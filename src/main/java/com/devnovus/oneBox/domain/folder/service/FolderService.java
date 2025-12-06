@@ -7,6 +7,7 @@ import com.devnovus.oneBox.domain.folder.dto.FolderRenameRequest;
 import com.devnovus.oneBox.domain.folder.util.FolderValidator;
 import com.devnovus.oneBox.domain.metadata.dto.MetadataResponse;
 import com.devnovus.oneBox.domain.metadata.entity.Metadata;
+import com.devnovus.oneBox.domain.metadata.enums.MetadataType;
 import com.devnovus.oneBox.domain.metadata.repository.AdvisoryLockRepository;
 import com.devnovus.oneBox.domain.metadata.repository.MetadataRepository;
 import com.devnovus.oneBox.domain.metadata.util.MetadataMapper;
@@ -51,10 +52,8 @@ public class FolderService {
         Metadata folder = findMetadata(folderId);
 
         folderValidator.validateFolderType(folder.getType());
-        return metadataRepository.findByParentFolderId(folderId)
-                .stream()
-                .map(metadataMapper::createMetadataResponse)
-                .toList();
+        List<Metadata> metadataList = metadataRepository.findByParentFolderId(folderId);
+        return metadataMapper.createMetadataResponse(metadataList);
     }
 
     /** 폴더이동 */
@@ -64,16 +63,11 @@ public class FolderService {
         advisoryLockRepository.acquireTxLock(ownerId);
 
         Metadata folder = findMetadata(folderId);
-        Metadata parentFolder = findMetadata(req.getParentFolderId());
+        Metadata newParentFolder = findMetadata(req.getParentFolderId());
 
-        // 검증
-        folderValidator.validateForMove(parentFolder, folder);
-
-        // 상위 이동 및 경로 일괄 수정
-        folder.setParentFolder(parentFolder);
-        String oldPrefix = folder.getPath();
-        String newPrefix = metadataMapper.genFolderPath(parentFolder.getPath(), folder.getName());
-        metadataRepository.updatePathByBulk(folder.getOwner().getId(), oldPrefix, newPrefix);
+        // 검증 및 이동
+        folderValidator.validateForMove(newParentFolder, folder);
+        folder.setParentFolder(newParentFolder);
     }
 
     /** 폴더이름수정 */
@@ -83,16 +77,10 @@ public class FolderService {
         advisoryLockRepository.acquireTxLock(ownerId);
 
         Metadata folder = findMetadata(folderId);
-        Metadata parentFolder = folder.getParentFolder();
 
-        // 검증
-        folderValidator.validateForRename(parentFolder, folder, req);
-
-        // 폴더 이름 수정 및 경로 일괄 수정
+        // 검증 및 수정
+        folderValidator.validateForRename(folder.getParentFolder(), folder, req);
         folder.setName(req.getFolderName());
-        String oldPrefix = folder.getPath();
-        String newPrefix = metadataMapper.genFolderPath(parentFolder.getPath(), req.getFolderName());
-        metadataRepository.updatePathByBulk(folder.getOwner().getId(), oldPrefix, newPrefix);
     }
 
     /** 폴더삭제 */
@@ -102,19 +90,26 @@ public class FolderService {
         advisoryLockRepository.acquireTxLock(ownerId);
 
         Metadata folder = findMetadata(folderId);
-        User user = folder.getOwner();
         folderValidator.validateFolderType(folder.getType());
 
-        // 파일 삭제
-        List<Metadata> childFiles = metadataRepository.findChildFiles(folder.getOwner().getId(), folder.getPath());
+        List<Metadata> children = metadataRepository.findAllChildrenByRecursive(folderId);
+        User owner = findUser(ownerId);
 
-        for (Metadata file: childFiles) {
-            fileRepository.removeObject(file.getFileMetadata().getObjectName());
-            user.minusUsedQuota(file.getSize());
+        for (Metadata child: children) {
+            if (child.getType() == MetadataType.FILE) {
+                fileRepository.removeObject(child.getFileMetadata().getObjectName());
+                owner.minusUsedQuota(child.getSize());
+            }
         }
 
-        // 메타데이터 삭제
-        metadataRepository.deleteAllChildren(ownerId, folder.getPath());
+        metadataRepository.deleteAllByIds(
+                children.stream().map(Metadata::getId).toList()
+        );
+    }
+
+    private User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
     }
 
     private Metadata findMetadata(Long metadataId) {

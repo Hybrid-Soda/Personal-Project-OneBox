@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/folders/v3")
+@RequestMapping("/folders")
 @RequiredArgsConstructor
 public class FolderController {
     private final FolderService folderService;

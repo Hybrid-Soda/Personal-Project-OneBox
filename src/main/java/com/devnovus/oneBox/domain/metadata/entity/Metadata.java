@@ -7,6 +7,7 @@ import com.devnovus.oneBox.global.aop.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -32,10 +33,6 @@ public class Metadata extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    // 경로
-    @Column(nullable = false)
-    private String path;
-
     // 타입 (파일, 폴더)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -53,13 +50,12 @@ public class Metadata extends BaseEntity {
 
     @Builder
     public Metadata(
-            User owner, Metadata parentFolder, String name, String path,
+            User owner, Metadata parentFolder, String name,
             MetadataType type, Long size, String objectName, String mimeType
     ) {
         this.owner = owner;
         this.parentFolder = parentFolder;
         this.name = name;
-        this.path = path;
         this.type = type;
         this.size = (size == null ? 0L : size);
 
@@ -70,10 +66,6 @@ public class Metadata extends BaseEntity {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public void setParentFolder(Metadata parentFolder) {

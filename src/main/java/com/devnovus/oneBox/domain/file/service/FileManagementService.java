@@ -26,14 +26,8 @@ public class FileManagementService {
         Metadata file = findMetadata(fileId);
         Metadata parentFolder = findMetadata(req.getParentFolderId());
 
-        // 검증
+        // 검증 및 이동
         fileValidator.validateForUpdate(file.getType(), req.getParentFolderId(), file.getName());
-
-        // 새로운 경로 생성
-        String newPath = parentFolder.getPath() + file.getName();
-
-        // 수정
-        file.setPath(newPath);
         file.setParentFolder(parentFolder);
     }
 
@@ -42,14 +36,8 @@ public class FileManagementService {
     public void updateFileName(Long fileId, FileRenameRequest req) {
         Metadata file = findMetadata(fileId);
 
-        // 검증
+        // 검증 및 수정
         fileValidator.validateForUpdate(file.getType(), file.getParentFolder().getId(), req.getFileName());
-
-        // 새로운 경로 생성
-        String newPath = file.getPath().replace(file.getName(), req.getFileName());
-
-        // 수정
-        file.setPath(newPath);
         file.setName(req.getFileName());
     }
 
@@ -61,8 +49,8 @@ public class FileManagementService {
 
         fileValidator.validateFileType(file.getType());
 
-        metadataRepository.delete(file);
         fileRepository.removeObject(file.getFileMetadata().getObjectName());
+        metadataRepository.delete(file);
         owner.minusUsedQuota(file.getSize());
     }
 
