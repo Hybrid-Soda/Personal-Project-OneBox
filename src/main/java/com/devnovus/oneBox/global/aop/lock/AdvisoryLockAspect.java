@@ -23,8 +23,7 @@ public class AdvisoryLockAspect {
     @Around("@annotation(AdvisoryLock)")
     public Object lock(final ProceedingJoinPoint joinPoint) throws Throwable {
         Long folderId = CustomSpringELParser.getDynamicValue(joinPoint);
-        Long ownerId = metadataRepository.findOwnerIdById(folderId)
-                .orElseThrow(() -> new ApplicationException(ApplicationError.USER_NOT_FOUND));
+        Long ownerId = metadataRepository.findOwnerIdById(folderId);
 
         return transactionalExecutor.proceed(joinPoint, ownerId);
     }

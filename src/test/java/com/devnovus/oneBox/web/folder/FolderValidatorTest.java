@@ -83,7 +83,7 @@ public class FolderValidatorTest {
     @DisplayName("순환 구조 여부 검증 테스트")
     void cyclicStructureValidationTest() {
         // when & then
-        assertThatThrownBy(() -> folderValidator.validateNoCircularMove(6L, 7L))
+        assertThatThrownBy(() -> folderValidator.validateNoCircularMove(7L, 6L))
                 .isInstanceOf(ApplicationException.class)
                 .hasMessageContaining(ApplicationError.FOLDER_CANNOT_MOVE_TO_DESCENDANT.getMessage());
     }

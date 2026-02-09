@@ -8,12 +8,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MetadataRepository extends JpaRepository<Metadata, Long> {
     // 소유자 식별키 조회
     @Query("SELECT m.owner.id FROM Metadata m WHERE m.id = :id")
-    Optional<Long> findOwnerIdById(Long id);
+    Long findOwnerIdById(Long id);
 
     // 같은 경로에 동일한 이름의 폴더 확인
     Boolean existsByNameAndParentFolderIdAndType(String name, Long parentFolderId, MetadataType type);

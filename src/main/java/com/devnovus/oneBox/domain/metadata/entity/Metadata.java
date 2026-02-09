@@ -11,13 +11,7 @@ import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
-@Table(
-        name = "metadata",
-        uniqueConstraints = @UniqueConstraint(
-                name = "unique_constraint_for_update",
-                columnNames = {"owner_id", "parent_folder_id", "name"}
-        )
-)
+@Table(name = "metadata")
 public class Metadata extends BaseEntity {
     // 소유자
     @JoinColumn(name = "owner_id")
@@ -70,5 +64,13 @@ public class Metadata extends BaseEntity {
 
     public void setParentFolder(Metadata parentFolder) {
         this.parentFolder = parentFolder;
+    }
+
+    public void plusSize(Long size) {
+        this.size += size;
+    }
+
+    public void minusSize(Long size) {
+        this.size -= size;
     }
 }

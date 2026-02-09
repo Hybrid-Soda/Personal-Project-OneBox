@@ -26,6 +26,7 @@ public class FolderValidator {
     /** 폴더 이동 시 검증 */
     public void validateForMove(Metadata parentFolder, Metadata folder) {
         validateFolderType(parentFolder.getType());
+        validateDuplicatedName(folder.getName(), parentFolder.getId());
         validateChildFolderLimit(parentFolder.getId());
         validateNoCircularMove(parentFolder.getId(), folder.getId());
         validateRootFolderUpdate(folder);

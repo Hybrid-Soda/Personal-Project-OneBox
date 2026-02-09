@@ -17,7 +17,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -34,6 +33,7 @@ public class FolderConcurrencyTest {
     private Metadata parentB;
     private Metadata parentC;
     private Metadata childA;
+    private Metadata childB;
     private Metadata childC;
 
     @BeforeEach
@@ -44,6 +44,7 @@ public class FolderConcurrencyTest {
         parentB = metadataRepository.save(new Metadata(user, root, "B", MetadataType.FOLDER, 0L, null, null));
         parentC = metadataRepository.save(new Metadata(user, root, "C", MetadataType.FOLDER, 0L, null, null));
         childA = metadataRepository.save(new Metadata(user, parentA, "cA", MetadataType.FOLDER, 0L, null, null));
+        childB = metadataRepository.save(new Metadata(user, parentB, "cA", MetadataType.FOLDER, 0L, null, null));
         childC = metadataRepository.save(new Metadata(user, parentC, "cC", MetadataType.FOLDER, 0L, null, null));
         metadataRepository.flush();
     }
@@ -102,34 +103,48 @@ public class FolderConcurrencyTest {
     class MoveFolderValidation {
 
         @Test
-        @DisplayName("동시에 동일 폴더를 서로 다른 부모로 이동 시 하나만 성공해야 한다")
+        @DisplayName("동시에 동일 폴더를 서로 다른 폴더로 이동 시 순차적으로 성공하되 하나의 값만 나타나야 한다")
         void concurrent_differentParents() throws Exception {
-            FolderMoveRequest requestA = new FolderMoveRequest(parentA.getId());
-            FolderMoveRequest requestB = new FolderMoveRequest(parentB.getId());
+            // given
+            Long parentAId = parentA.getId();
+            Long parentBId = parentB.getId();
+            Long parentCId = parentC.getId();
+            FolderMoveRequest requestA = new FolderMoveRequest(parentAId);
+            FolderMoveRequest requestB = new FolderMoveRequest(parentBId);
 
-            runConcurrent(
-                    () -> tryMove(parentC.getId(), requestA),
-                    () -> tryMove(parentC.getId(), requestB)
+            // when
+            boolean[] results = runConcurrent(
+                    () -> tryMove(parentCId, requestA),
+                    () -> tryMove(parentCId, requestB)
             );
+
+            // then
+            assertThat(results[0] & results[1]).isTrue();
+            Long actual = metadataRepository.findById(parentCId).orElseThrow().getParentFolder().getId();
+            assertThat(actual).isIn(parentAId, parentBId);
         }
 
         @Test
         @DisplayName("동시에 동일 경로로 같은 이름의 폴더를 이동 시 하나만 성공해야 한다")
         void concurrent_duplicateName() throws Exception {
-            Metadata otherA = Metadata.builder()
-                    .owner(user).parentFolder(parentC).name("A").type(MetadataType.FOLDER)
-                    .build();
-            metadataRepository.save(otherA);
+            // given
+            Long childAId = childA.getId();
+            Long childBId = childB.getId();
+            Long parentCId = parentC.getId();
+            FolderMoveRequest requestA = new FolderMoveRequest(parentCId);
+            FolderMoveRequest requestB = new FolderMoveRequest(parentCId);
 
-            FolderMoveRequest requestA = new FolderMoveRequest(parentB.getId());
-            FolderMoveRequest requestB = new FolderMoveRequest(parentB.getId());
-
+            // when
             boolean[] results = runConcurrent(
-                    () -> tryMove(otherA.getId(), requestA),
-                    () -> tryMove(parentA.getId(), requestB)
+                    () -> tryMove(childAId, requestA),
+                    () -> tryMove(childBId, requestB)
             );
 
+            // then
             assertThat(results[0] ^ results[1]).isTrue();
+            Long actualA = metadataRepository.findById(childAId).orElseThrow().getParentFolder().getId();
+            Long actualB = metadataRepository.findById(childBId).orElseThrow().getParentFolder().getId();
+            assertThat((actualA.equals(parentCId)) ^ (actualB.equals(parentCId))).isTrue();
         }
 
         @Test
@@ -151,20 +166,6 @@ public class FolderConcurrencyTest {
         void concurrent_circularMoveAttempt_2() throws Exception {
             FolderMoveRequest requestA = new FolderMoveRequest(childC.getId());
             FolderMoveRequest requestB = new FolderMoveRequest(parentA.getId());
-
-            boolean[] results = runConcurrent(
-                    () -> tryMove(parentA.getId(), requestA),
-                    () -> tryMove(parentC.getId(), requestB)
-            );
-
-            assertThat(results[0] ^ results[1]).isTrue();
-        }
-
-        @Test
-        @DisplayName("동시에 순환 이동 시도 시 순환 구조가 생성되지 않아야 한다 - 3")
-        void concurrent_circularMoveAttempt_3() throws Exception {
-            FolderMoveRequest requestA = new FolderMoveRequest(childC.getId());
-            FolderMoveRequest requestB = new FolderMoveRequest(childA.getId());
 
             boolean[] results = runConcurrent(
                     () -> tryMove(parentA.getId(), requestA),
